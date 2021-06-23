@@ -1,0 +1,6 @@
+http://pegacorn-fhirplace-api.site-a:8080/fhirplace-bigdata/hadoopGET
+http://pegacorn-fhirplace-api.site-a:8080/fhirplace-bigdata/hadoopPOST
+
+docker build --rm --build-arg IMAGE_BUILD_TIMESTAMP="%date% %time%" -t pegacorn-fhirplace-api:1.0.0-snapshot --file Dockerfile .
+
+helm upgrade pegacorn-fhirplace-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-api,imagePullPolicy=Never,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,numOfPods=1 helm
