@@ -12,13 +12,14 @@ import org.slf4j.LoggerFactory;
 public class String2JSONObject {
     private static final Logger LOG = LoggerFactory.getLogger(String2JSONObject.class);
 
-    public JSONObject convert2JSON(String incomingPacket) {
-        if (StringUtils.isEmpty(incomingPacket)) {
+    public JSONObject convert2JSON(String bufferedWriter) {
+        if (StringUtils.isEmpty(bufferedWriter)) {
             throw new JSONException("The payload is empty");
         }
         
-        LOG.debug(".encapsulateAPInvoicesMessage(): Entry, incomingPacket --> {}", incomingPacket);
-        JSONObject outgoingJSONObject = new JSONObject(incomingPacket);
+//        LOG.info(bufferedWriter);
+        LOG.debug(".encapsulateAPInvoicesMessage(): Entry, bufferedWriter --> {}", bufferedWriter);
+        JSONObject outgoingJSONObject = new JSONObject(bufferedWriter);
         return(outgoingJSONObject);
     }
 }

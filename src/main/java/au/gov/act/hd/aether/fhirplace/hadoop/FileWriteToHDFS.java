@@ -13,16 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 public class FileWriteToHDFS {
 
-//	public static void main(String[] args) throws IOException {
-////      ReadWriteHDFSExample.checkExists();
-////      ReadWriteHDFSExample.createDirectory();
-////      ReadWriteHDFSExample.checkExists();
-////		FileWriteToHDFS.writeFileToHDFS();
-////      ReadWriteHDFSExample.appendToHDFSFile();
-////  	FileWriteToHDFS.readFileFromHDFS();
-//  }
-
-  public static void readFileFromHDFS() throws IOException {
+  public void readFileFromHDFS() throws IOException {
       Configuration configuration = new Configuration();
       configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
       FileSystem fileSystem = FileSystem.get(configuration);
@@ -52,7 +43,7 @@ public class FileWriteToHDFS {
       configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
       FileSystem fileSystem = FileSystem.get(configuration);
       //Create a path
-      String fileName = "senators.json";
+      String fileName = "officials.json";
       Path hdfsWritePath = new Path("/user/pegacorn/sample-dataset/" + fileName);
       FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
 
@@ -63,7 +54,7 @@ public class FileWriteToHDFS {
       fileSystem.close();
   }
 
-  public static void appendToHDFSFile() throws IOException {
+  public void appendToHDFSFile() throws IOException {
       Configuration configuration = new Configuration();
       configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
       FileSystem fileSystem = FileSystem.get(configuration);
@@ -79,7 +70,7 @@ public class FileWriteToHDFS {
       fileSystem.close();
   }
 
-  public static void createDirectory() throws IOException {
+  public void createDirectory() throws IOException {
       Configuration configuration = new Configuration();
       configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
       FileSystem fileSystem = FileSystem.get(configuration);
@@ -88,7 +79,7 @@ public class FileWriteToHDFS {
       fileSystem.mkdirs(path);
   }
 
-  public static void checkExists() throws IOException {
+  public void checkExists() throws IOException {
       Configuration configuration = new Configuration();
       configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
       FileSystem fileSystem = FileSystem.get(configuration);
