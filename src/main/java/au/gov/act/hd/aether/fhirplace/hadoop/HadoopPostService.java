@@ -38,9 +38,9 @@ public class HadoopPostService extends  RouteBuilderCommonBase{
 
         // Validate the request
         from("direct:storeRequest")
-        	.bean("String2JSONObject")
+        	.bean(String2JSONObject.class, "convert2JSON")
         	.unmarshal().json(JsonLibrary.Jackson, JsonNode.class)
-        	.bean("StoreHadoop");
+        	.bean(StoreHadoop.class);
 	}
         	
                        
