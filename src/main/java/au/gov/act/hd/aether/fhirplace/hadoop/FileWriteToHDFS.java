@@ -40,10 +40,10 @@ public class FileWriteToHDFS {
 
   public void writeFileToHDFS(JSONObject jsonMessage) throws IOException {
       Configuration configuration = new Configuration();
-      configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
+      configuration.set("fs.defaultFS", "hdfs://10.152.183.63:8020");
       FileSystem fileSystem = FileSystem.get(configuration);
       //Create a path
-      String fileName = "officials.json";
+      String fileName = "sample-data.json";
       Path hdfsWritePath = new Path("/user/pegacorn/sample-dataset/" + fileName);
       FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
 
