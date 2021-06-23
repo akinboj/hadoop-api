@@ -40,14 +40,16 @@ public class FileWriteToHDFS {
 
   public void writeFileToHDFS(JSONObject jsonMessage) throws IOException {
       Configuration configuration = new Configuration();
-//      configuration.set("fs.defaultFS", "hdfs://10.152.183.63:8020");
       String clusterIP = (System.getenv("CLUSTER_IP"));
       configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
       FileSystem fileSystem = FileSystem.get(configuration);
-      //Create a path
-      String fileName = "sample-data.json";
+      // Create a path
+      String fileName = "Oireachtas.json";
       Path hdfsWritePath = new Path("/user/pegacorn/sample-dataset/" + fileName);
       FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
+      
+      // Set replication
+      fileSystem.setReplication(hdfsWritePath, (short) 2);
 
       BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream,StandardCharsets.UTF_8));
       bufferedWriter.write(jsonMessage.toString());
