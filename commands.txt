@@ -1,6 +1,8 @@
-http://pegacorn-fhirplace-api.site-a:8080/fhirplace-bigdata/hadoopGET
-http://pegacorn-fhirplace-api.site-a:8080/fhirplace-bigdata/hadoopPOST
+https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopGET
+https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopPOST
 
-docker build --rm --build-arg IMAGE_BUILD_TIMESTAMP="%date% %time%" -t pegacorn-fhirplace-api:1.0.0-snapshot --file Dockerfile .
+docker build --rm --build-arg IMAGE_BUILD_TIMESTAMP="%date% %time%" -t pegacorn-fhirplace-bigdata-api:1.0.0-snapshot --file Dockerfile .
 
-helm upgrade pegacorn-fhirplace-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-api,imagePullPolicy=Never,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,numOfPods=1 helm
+helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,clusterIP=10.152.183.63,hostPathCerts=/data/certificates,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,numOfPods=1 helm
+
+\helm\helm upgrade aether-fhirbreak-techone-site-a --install --namespace site-a --set serviceName=aether-fhirbreak-techone,basePort=32410,basePortInsidePod=8443,imageTag=1.0.0-snapshot,deploymentFileName=aether-fhirbreak-techone-1.0.0-SNAPSHOT.war,authorisationServerHostAndPort=pegacorn-authorisation.site-a:32402,authorisationRealmName=supply-chain,hostPathCerts=/data/certificates,edgeReceiverBasePort=32400,edgeReceiverBasePortInsidePod=12400,petasosBasePort=30860,petasosBasePortInsidePod=10860,ladonServiceName=aether-ladon-gen0,ladonBasePort=30020,ladonEdgeReceiverBasePort=30200,ladonPetasosBasePort=30810,ladonSvcIP=10.100.157.75,jvmMaxHeapSizeMB=768,pegacornLogLevel=INFO,aetherLogLevel=INFO,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,numOfPods=1 helm

@@ -3,9 +3,21 @@
 
 echo "Staring start-wildfly.sh as user $(whoami) with params $@"
 
+# After running each command the content of the "$JBOSS_HOME/standalone/configuration/standalone_xml_history/current" directory
+# needs to be deleted as each steps expects it to be empty.  Maybe there is another way??
+# $JBOSS_HOME/bin/jboss-cli.sh --file=$JBOSS_HOME/bin/keycloak-adapter-configuration.cli
+rm -rf $JBOSS_HOME/standalone/configuration/standalone_xml_history/current/*
+
 #From https://hub.docker.com/r/jboss/wildfly
 #and https://unix.stackexchange.com/questions/444946/how-can-we-run-a-command-stored-in-a-variable
 wildfly_runner=( /opt/jboss/wildfly/bin/standalone.sh -b 0.0.0.0 )
+if [ -n "$WILDFLY_MANAGEMENT_USER" ]; then
+    /opt/jboss/wildfly/bin/add-user.sh "$WILDFLY_MANAGEMENT_USER" "$WILDFLY_MANAGEMENT_PASSWORD" --silent
+fi
+#NOTE: as the Readiness and Liveness health probes currently are using POD_IP:9990/health, the management port is required regardless of 
+#whether an admin user is specified.  Also tested exposing this port in the Kubernetes Service without the user added and access was not 
+#possible to the management console
+wildfly_runner+=( -bmanagement 0.0.0.0 )
 
 # See http://tldp.org/LDP/abs/html/comparison-ops.html
 if [ -n "$WILDFLY_ENABLE_DEBUG" ] && [ "$WILDFLY_ENABLE_DEBUG" = 'Yes' ]; then
@@ -25,15 +37,11 @@ if [ -n "$JVM_MAX_HEAP_SIZE" ]; then
 fi
 #    sed -i "s+max-threads count=\"10\"+max-threads count=\"100\"+g" "$JBOSS_HOME/standalone/configuration/standalone.xml"
 
-
-# Change the level of the <console-handler name="CONSOLE"> to the lowest possible level of TRACE
-# NOTE: sed -i "/INFO/{s//TRACE/;:p;n;bp}" doesn't work with the logged error message of sed: unterminated {
-lineNo=$(grep -Hn '<console-handler' "$JBOSS_HOME/standalone/configuration/standalone.xml" | cut -d ':' -f 2)
-sed -i "1,$((lineNo + 1))s/INFO/TRACE/" "$JBOSS_HOME/standalone/configuration/standalone.xml"
-
-# Replace all instances of "DEBUG" with "WARN"
-sed -i "s/\"DEBUG\"/\"WARN\"/" "$JBOSS_HOME/standalone/configuration/standalone.xml"
-
+if [ -n "$WILDFLY_LOG_LEVEL" ] && [ "$WILDFLY_LOG_LEVEL" = 'DEBUG' ]; then
+    sed -i "/INFO/{s//DEBUG/;:p;n;bp}" "$JBOSS_HOME/standalone/configuration/standalone.xml"
+fi
+#    sed -i "s+<logger category=\"sun.rmi\"+<logger category=\"org.jboss.as.server.deployment\"><level name=\"DEBUG\"/></logger><logger category=\"sun.rmi\"+" "$JBOSS_HOME/standalone/configuration/standalone.xml"
+#    sed -i "s+<logger category=\"sun.rmi\"+<logger category=\"org.jboss.jandex\"><level name=\"DEBUG\"/></logger><logger category=\"sun.rmi\"+" "$JBOSS_HOME/standalone/configuration/standalone.xml"
 if [ -n "$WILDFLY_LOG_LEVEL" ] && [ "$WILDFLY_LOG_LEVEL" != 'INFO' ]; then
     sed -i "s+<level name=\"INFO\"/>+<level name=\"$WILDFLY_LOG_LEVEL\"/>+g" "$JBOSS_HOME/standalone/configuration/standalone.xml"
 fi
@@ -47,5 +55,4 @@ echo "-------------------------------------------------------"
 echo "Starting wildfly with the command: ${wildfly_runner[@]}"
 echo "-------------------------------------------------------"
 "${wildfly_runner[@]}"
-
 
