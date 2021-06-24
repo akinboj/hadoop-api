@@ -5,7 +5,6 @@ echo "Staring start-wildfly.sh as user $(whoami) with params $@"
 
 # After running each command the content of the "$JBOSS_HOME/standalone/configuration/standalone_xml_history/current" directory
 # needs to be deleted as each steps expects it to be empty.  Maybe there is another way??
-# $JBOSS_HOME/bin/jboss-cli.sh --file=$JBOSS_HOME/bin/keycloak-adapter-configuration.cli
 rm -rf $JBOSS_HOME/standalone/configuration/standalone_xml_history/current/*
 
 #From https://hub.docker.com/r/jboss/wildfly
