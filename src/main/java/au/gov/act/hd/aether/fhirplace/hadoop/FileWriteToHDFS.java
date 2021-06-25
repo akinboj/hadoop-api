@@ -15,11 +15,12 @@ public class FileWriteToHDFS {
 
   public void readFileFromHDFS() throws IOException {
       Configuration configuration = new Configuration();
-      configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
+      String clusterIP = (System.getenv("CLUSTER_IP"));
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
       FileSystem fileSystem = FileSystem.get(configuration);
       //Create a path
       String fileName = "senators.json";
-      Path hdfsReadPath = new Path("/user/pegacorn/sample-dataset/" + fileName);
+      Path hdfsReadPath = new Path("/data/pegacorn/sample-dataset/" + fileName);
       //Init input stream
       FSDataInputStream inputStream = fileSystem.open(hdfsReadPath);
       //Classical input stream usage
@@ -45,7 +46,7 @@ public class FileWriteToHDFS {
       FileSystem fileSystem = FileSystem.get(configuration);
       // Create a path
       String fileName = "Oireachtas.json";
-      Path hdfsWritePath = new Path("/user/pegacorn/sample-dataset/" + fileName);
+      Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
       FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
       
       // Set replication
@@ -60,11 +61,12 @@ public class FileWriteToHDFS {
 
   public void appendToHDFSFile() throws IOException {
       Configuration configuration = new Configuration();
-      configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
+      String clusterIP = (System.getenv("CLUSTER_IP"));
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
       FileSystem fileSystem = FileSystem.get(configuration);
       //Create a path
       String fileName = "senators.json";
-      Path hdfsWritePath = new Path("/user/pegacorn/sample-dataset/" + fileName);
+      Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
       FSDataOutputStream fsDataOutputStream = fileSystem.append(hdfsWritePath);
 
       BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream,StandardCharsets.UTF_8));
@@ -76,7 +78,8 @@ public class FileWriteToHDFS {
 
   public void createDirectory() throws IOException {
       Configuration configuration = new Configuration();
-      configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
+      String clusterIP = (System.getenv("CLUSTER_IP"));
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
       FileSystem fileSystem = FileSystem.get(configuration);
       String directoryName = "pegacorn/sample-dataset";
       Path path = new Path(directoryName);
@@ -85,7 +88,8 @@ public class FileWriteToHDFS {
 
   public void checkExists() throws IOException {
       Configuration configuration = new Configuration();
-      configuration.set("fs.defaultFS", "hdfs://pvmone:54310");
+      String clusterIP = (System.getenv("CLUSTER_IP"));
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
       FileSystem fileSystem = FileSystem.get(configuration);
       String directoryName = "pegacorn/sample-dataset";
       Path path = new Path(directoryName);
