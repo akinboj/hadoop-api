@@ -45,7 +45,7 @@ public class FileWriteToHDFS {
       configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
       FileSystem fileSystem = FileSystem.get(configuration);
       // Create a path
-      String fileName = "Oireachtas.json";
+      String fileName = "mock-data.json";
       Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
       FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
       

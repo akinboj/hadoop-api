@@ -35,6 +35,4 @@ ls -la /var/lib/pegacorn-keystores/
 # and the Alpine su-exec program is a substitute for gosu (see https://devops.stackexchange.com/a/5242 and
 # https://github.com/docker-library/postgres/blob/33bccfcaddd0679f55ee1028c012d26cd196537d/12/docker-entrypoint.sh line 281 vs
 # https://github.com/docker-library/postgres/blob/33bccfcaddd0679f55ee1028c012d26cd196537d/12/alpine/docker-entrypoint.sh line 281
-# exec gosu jboss "/start-wildfly.sh" "$@"
-
-exec gosu root "/start-wildfly.sh" "$@"
+exec gosu jboss "/start-wildfly.sh" "$@"
