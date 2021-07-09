@@ -3,15 +3,11 @@ https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopPOST
 
 docker build --rm --build-arg IMAGE_BUILD_TIMESTAMP="%date% %time%" -t pegacorn-fhirplace-bigdata-api:1.0.0-snapshot --file Dockerfile .
 
-<<<<<<< HEAD
 helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,clusterIP=10.152.183.70,masterPodIP=10.1.217.170,hostPathCerts=/data/certificates,hostPathKeytab=/data/hadoop-keytab,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,numOfPods=1 helm
-=======
-helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,clusterIP={Cluster_IP_NameNode},hostPathCerts=/data/certificates,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,numOfPods=1 helm
->>>>>>> 43d0dc2aa962a39cae2cb6112a948fa5f50a626f
 
 Create-Cert-Set -certSubject 'pegacorn-fhirplace-bigdata-api.site-a' -certPwd 'Peg@cornK3yHD' -createKeystore $True -truststorePwd 'Peg@cornTrustSt0reHD'
 
 kubectl create secret generic pegacorn-fhirplace-bigdata-api-secrets --from-literal=keyPassword="Peg@cornK3yHD" --from-literal=truststorePassword="Peg@cornTrustSt0reHD" --namespace=site-a
 
 
-helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,clusterIP=10.152.183.173,masterPodIP=10.1.217.136,hostPathCerts=/data/certificates,hostPathKeytab=/data/hadoop-keytab,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,loginUser=jboss@PEGACORN-FHIRPLACE-NAMENODE.SITE-A,keyTabPath=/etc/ssl/keytab/jboss.hdfs.keytab,numOfPods=1 helm
+helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,clusterIP=10.152.183.94,masterPodIP=10.1.217.147,hostPathCerts=/data/certificates,hostPathKeytab=/data/hadoop-keytab,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,loginUser=jboss@PEGACORN-FHIRPLACE-NAMENODE.SITE-A,keyTabPath=/etc/ssl/keytab/jboss.hdfs.keytab,numOfPods=1 helm
