@@ -100,6 +100,12 @@ spec:
           value: "{{ .Values.jvmMaxHeapSizeMB }}m"
         - name: CLUSTER_IP
           value: {{ .Values.clusterIP }}
+        - name: NAMENODE_IP
+          value: {{ .Values.masterPodIP }}
+        - name: LOGIN_USER
+          value: {{ .Values.loginUser }}
+        - name: KEYTAB_PATH
+          value: {{ .Values.keyTabPath }}
         # Set the minimum memory that will be available on the node to assign to the container to be the jvmMaxHeapSizeMB plus 128 MB 
         # for the native heap and operation system processes associated with running Java
         # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/#motivation-for-memory-requests-and-limits
@@ -114,7 +120,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
         name: wildfly
         ports:
         - containerPort: {{ add 0 (.Values.basePortInsidePod | default .Values.basePort) }}
@@ -141,15 +147,20 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 10
+          initialDelaySeconds: 60
         securityContext:
           privileged: false
         volumeMounts:
         - name: certificates
-          mountPath: /var/lib/pegacorn-ssl-certs  
+          mountPath: /var/lib/pegacorn-ssl-certs
+        - name: keytab
+          mountPath: /etc/ssl/keytab 
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 30 }}
       volumes:
       - name: certificates
         hostPath:
           path: {{ .Values.hostPathCerts }}
+      - name: keytab
+        hostPath:
+          path: {{ .Values.hostPathKeytab }}
 

@@ -18,6 +18,9 @@ FROM fhirfactory/pegacorn-base-docker-wildfly:1.0.0
 # # Copy and run cli to modify the standalone.xml configuration.
 # COPY authorisation-server/cli/keycloak-adapter-configuration.cli $JBOSS_HOME/bin/keycloak-adapter-configuration.cli
 
+# Kerberos config
+RUN mkdir -p etc/ssl/keytab
+
 # Replace the default wildfly welcome content page for the URL /, with a blank html page, so the application server is not easily exposed to callers.
 RUN mv $JBOSS_HOME/welcome-content/index.html $JBOSS_HOME/welcome-content/index-bak.html
 COPY /src/main/webapp/index.html $JBOSS_HOME/welcome-content/index.html
