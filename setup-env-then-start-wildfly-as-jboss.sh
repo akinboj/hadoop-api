@@ -8,6 +8,7 @@ echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 
 # kerberos client
 echo ${NAMENODE_IP} pegacorn-fhirplace-namenode.kerberos.com >> /etc/hosts
+echo 10.1.217.173 pegacorn-fhirplace-datanode-alpha-6f4b5db5b6-l7css >> /etc/hosts
 
 # Copy the certificate files based on
 # 1. https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes

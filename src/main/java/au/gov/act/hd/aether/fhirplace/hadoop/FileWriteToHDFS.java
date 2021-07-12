@@ -19,7 +19,7 @@ public class FileWriteToHDFS {
   public void readFileFromHDFS() throws IOException {
       Configuration configuration = new Configuration();
       String clusterIP = (System.getenv("CLUSTER_IP"));
-      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":9820");
       FileSystem fileSystem = FileSystem.get(configuration);
       //Create a path
       String fileName = "senators.json";
@@ -51,7 +51,7 @@ public class FileWriteToHDFS {
       configuration.set("hadoop.security.authentication", "kerberos");
       configuration.set("hadoop.security.authorization", "true");
       String clusterIP = (System.getenv("CLUSTER_IP"));
-      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":9820");
       configuration.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
       // hack for running locally with fake DNS records
       // set this to true if overriding the host name in /etc/hosts
@@ -87,7 +87,7 @@ public class FileWriteToHDFS {
   public void appendToHDFSFile() throws IOException {
       Configuration configuration = new Configuration();
       String clusterIP = (System.getenv("CLUSTER_IP"));
-      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":9820");
       FileSystem fileSystem = FileSystem.get(configuration);
       //Create a path
       String fileName = "senators.json";
@@ -104,7 +104,7 @@ public class FileWriteToHDFS {
   public void createDirectory() throws IOException {
       Configuration configuration = new Configuration();
       String clusterIP = (System.getenv("CLUSTER_IP"));
-      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":9820");
       FileSystem fileSystem = FileSystem.get(configuration);
       String directoryName = "pegacorn/sample-dataset";
       Path path = new Path(directoryName);
@@ -114,7 +114,7 @@ public class FileWriteToHDFS {
   public void checkExists() throws IOException {
       Configuration configuration = new Configuration();
       String clusterIP = (System.getenv("CLUSTER_IP"));
-      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
+      configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":9820");
       FileSystem fileSystem = FileSystem.get(configuration);
       String directoryName = "pegacorn/sample-dataset";
       Path path = new Path(directoryName);
