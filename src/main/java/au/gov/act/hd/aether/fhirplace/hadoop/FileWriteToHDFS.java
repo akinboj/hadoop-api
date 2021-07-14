@@ -55,7 +55,7 @@ public class FileWriteToHDFS {
       configuration.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
       // hack for running locally with fake DNS records
       // set this to true if overriding the host name in /etc/hosts
-      configuration.set("dfs.client.use.datanode.hostname", "true");
+//      configuration.set("dfs.client.use.datanode.hostname", "true");
       // server principal
       // the kerberos principal that the namenode is using
       configuration.set("dfs.namenode.kerberos.principal", "jboss/admin@PEGACORN-FHIRPLACE-NAMENODE.SITE-A");
