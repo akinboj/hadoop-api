@@ -1,5 +1,3 @@
-
-
 kubectl create secret generic pegacorn-fhirplace-bigdata-api-secrets --from-literal=keyPassword="Peg@cornK3yHD" --from-literal=truststorePassword="Peg@cornTrustSt0reHD" --namespace=site-a
 
 docker build --rm --build-arg IMAGE_BUILD_TIMESTAMP="%date% %time%" -t pegacorn-fhirplace-bigdata-api:1.0.0-snapshot --file Dockerfile .
