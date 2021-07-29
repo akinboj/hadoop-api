@@ -7,32 +7,28 @@ import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+
+import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Media;
-import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
 
-public class MediaResourceProvider implements IResourceProvider {
+import javax.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
+public class MediaResourceProvider extends BaseResourceProvider implements IResourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(MediaResourceProvider.class);
     private int myNextId = 2;
 
-
-   private Map<String, Media> myEvents = new HashMap<String, Media>();
 
    /**
     * Constructor
     */
    public MediaResourceProvider() {
-       Media pat1 = new Media();
-      pat1.setId("1");
-      
-      myEvents.put("1", pat1);
    }
 
    @Override
@@ -42,27 +38,41 @@ public class MediaResourceProvider implements IResourceProvider {
 
    @Read()
    public Media read(@IdParam IdType theId) {
-       Media retVal = myEvents.get(theId.getIdPart());
-      if (retVal == null) {
+//       Media retVal = null;
+//      if (retVal == null) {
          throw new ResourceNotFoundException(theId);
-      }
-      return retVal;
+//      }
+//      return retVal;
    }
 
    @Create
-   public MethodOutcome createEvent(@ResourceParam Media theMedia) {
+   public MethodOutcome createMedia(@ResourceParam Media theEvent) {
        // Give the resource the next sequential ID
        int id = myNextId++;
-       theMedia.setId(new IdType(id));
-       
-       LOG.info("Media registered: " + theMedia.fhirType());
+       theEvent.setId(new IdType(id));
 
-       // Store the resource in memory
-       myEvents.put(Integer.toString(id), theMedia);
+       LOG.info("Media registered: " + theEvent.fhirType());
 
+       try {
+           String fileName = generateName();
+           String parsedResource = parseResourceToJsonString(theEvent);
+           LOG.info("Media parsed: " + parsedResource);
+           
+          writeToFileSystem(fileName, parsedResource);
+
+
+       } catch (IOException e) {
+           // TODO Auto-generated catch block
+           e.printStackTrace();
+       }
        // Inform the server of the ID for the newly stored resource
-       return new MethodOutcome().setId(theMedia.getIdElement());
+       return new MethodOutcome().setId(theEvent.getIdElement());
    }
 
+@Override
+protected String generateName() {
+    return "Media-" + myNextId;
+}
+   
 
 }

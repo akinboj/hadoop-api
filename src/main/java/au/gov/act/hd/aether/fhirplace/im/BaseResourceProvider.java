@@ -10,11 +10,14 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.hl7.fhir.instance.model.api.IDomainResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 
 public abstract class BaseResourceProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(BaseResourceProvider.class);
 
     
     protected void writeToFileSystem(String fileName, String json) throws IOException {
@@ -23,7 +26,7 @@ public abstract class BaseResourceProvider {
       configuration.set("fs.defaultFS", "hdfs://"+clusterIP+":8020");
       FileSystem fileSystem = FileSystem.get(configuration);
       Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName + ".json");
-
+      
         FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
         
         // Set replication
@@ -35,6 +38,8 @@ public abstract class BaseResourceProvider {
         bufferedWriter.close();
         fileSystem.close();
     }
+    
+    protected abstract String generateName();
     
     protected String parseResourceToJsonString(IDomainResource resource) {
         FhirContext ctx = FhirContext.forR4();

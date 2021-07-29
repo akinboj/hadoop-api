@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.enterprise.context.ApplicationScoped;
+
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.IdType;
@@ -18,20 +20,16 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 
+@ApplicationScoped
 public class AuditEventResourceProvider extends BaseResourceProvider implements IResourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(AuditEventResourceProvider.class);
     private int myNextId = 2;
-
-    private Map<String, AuditEvent> myEvents = new HashMap<String, AuditEvent>();
 
     /**
      * Constructor
      */
     public AuditEventResourceProvider() {
-        AuditEvent pat1 = new AuditEvent();
-        pat1.setId("1");
 
-        myEvents.put("1", pat1);
     }
 
     @Override
@@ -41,11 +39,11 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
 
     @Read()
     public AuditEvent read(@IdParam IdType theId) {
-        AuditEvent retVal = myEvents.get(theId.getIdPart());
-        if (retVal == null) {
+//        AuditEvent retVal = myEvents.get(theId.getIdPart());
+//        if (retVal == null) {
             throw new ResourceNotFoundException(theId);
-        }
-        return retVal;
+//        }
+//        return retVal;
     }
 
     @Create
@@ -63,8 +61,6 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
             
            writeToFileSystem(fileName, parsedResource);
 
-            // Store the resource in memory
-            myEvents.put(Integer.toString(id), theEvent);
 
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -74,7 +70,8 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         return new MethodOutcome().setId(theEvent.getIdElement());
     }
     
-    private String generateName() {
+    @Override
+    protected String generateName() {
         return "AuditEvent-" + myNextId;
     }
 

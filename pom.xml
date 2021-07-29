@@ -23,9 +23,7 @@
   #L%
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
- 
+    <modelVersion>4.0.0</modelVersion> 
 
     <groupId>net.fhirfactory.pegacorn</groupId>
     <artifactId>hadoop-poc</artifactId>
@@ -133,23 +131,32 @@
             <version>2.0.0.Final</version>
             <scope>provided</scope>
         </dependency>
+		<dependency>
+            <groupId>org.jboss.spec.javax.jms</groupId>
+            <artifactId>jboss-jms-api_2.0_spec</artifactId>
+			<version>2.0.0.Final</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.jboss.spec.javax.servlet</groupId>
             <artifactId>jboss-servlet-api_4.0_spec</artifactId>
             <version>2.0.0.Final</version>
             <scope>provided</scope>
         </dependency>
+		        <dependency>
+            <groupId>org.jboss.spec.javax.ws.rs</groupId>
+            <artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
+			<version>2.0.0.Final</version>
+            <scope>provided</scope>
+        </dependency>
+		<dependency>
+            <groupId>org.jboss.spec.javax.annotation</groupId>
+            <artifactId>jboss-annotations-api_1.3_spec</artifactId>
+			<version>2.0.0.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
         
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-core</artifactId>
-            <version>3.8.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-cdi</artifactId>
-            <version>3.8.0</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-endpointdsl</artifactId>
