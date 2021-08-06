@@ -43,9 +43,10 @@ public class HBaseWriter {
 		
 		Configuration config = HBaseConfiguration.create();
 
-		
-		config.set("hbase.zookeeper.quorum", "10.1.1.111");
-		config.set("base.zookeeper.property.clientPort", "2181");
+		String hbaseIP = (System.getenv("HBASE_IP"));
+		String hbasePort = (System.getenv("HBASE_PORT"));
+		config.set("hbase.zookeeper.quorum", hbaseIP);
+		config.set("hbase.zookeeper.property.clientPort", hbasePort);
 
 		Connection connection = ConnectionFactory.createConnection(config);
 		Admin admin = connection.getAdmin();
