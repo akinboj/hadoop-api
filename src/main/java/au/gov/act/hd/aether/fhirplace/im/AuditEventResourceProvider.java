@@ -7,6 +7,9 @@ import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.IdType;
@@ -59,7 +62,7 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
             String fileName = generateName();
             String parsedResource = parseResourceToJsonString(theEvent);
             LOG.info("AuditEvent parsed: " + parsedResource);
-            
+            saveToDatabase();
 //           writeToFileSystem(fileName, parsedResource);
   
         } catch (Exception e) {
@@ -72,6 +75,23 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
     @Override
     protected String generateName() {
         return "AuditEvent-" + myNextId;
+    }
+
+    @Override
+    protected void saveToDatabase() {
+        // TODO Auto-generated method stub
+        try {
+            HBaseAdmin admin = getConfiguration();
+        } catch (MasterNotRunningException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ZooKeeperConnectionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
 }

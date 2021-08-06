@@ -45,7 +45,7 @@ public abstract class BaseResourceProvider {
         return hba;
     }
     
-    protected abstract void saveToDatabase();
+    protected abstract void saveToDatabase() throws Exception;
     
     
     protected void writeToFileSystem(String fileName, String json) throws IOException {

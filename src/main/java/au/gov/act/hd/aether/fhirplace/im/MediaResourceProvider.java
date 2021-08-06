@@ -13,6 +13,9 @@ import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Media;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.io.IOException;
@@ -72,6 +75,24 @@ public class MediaResourceProvider extends BaseResourceProvider implements IReso
 @Override
 protected String generateName() {
     return "Media-" + myNextId;
+}
+
+
+@Override
+protected void saveToDatabase() {
+    // TODO Auto-generated method stub
+    try {
+        HBaseAdmin admin = getConfiguration();
+    } catch (MasterNotRunningException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    } catch (ZooKeeperConnectionException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
 }
    
 
