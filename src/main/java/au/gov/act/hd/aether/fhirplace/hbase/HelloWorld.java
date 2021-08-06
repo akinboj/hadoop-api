@@ -12,7 +12,7 @@ public class HelloWorld {
         
         Configuration config = hw.getConfiguration();
         try {
-            HBaseAdmin.checkHBaseAvailable(config);
+            HBaseAdmin.available(config);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

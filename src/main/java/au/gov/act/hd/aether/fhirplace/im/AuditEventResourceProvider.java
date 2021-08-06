@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.enterprise.context.ApplicationScoped;
 
+import org.apache.hadoop.conf.Configuration;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.IdType;
@@ -59,11 +60,9 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
             String parsedResource = parseResourceToJsonString(theEvent);
             LOG.info("AuditEvent parsed: " + parsedResource);
             
-           writeToFileSystem(fileName, parsedResource);
-
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
+//           writeToFileSystem(fileName, parsedResource);
+  
+        } catch (Exception e) {
             e.printStackTrace();
         }
         // Inform the server of the ID for the newly stored resource

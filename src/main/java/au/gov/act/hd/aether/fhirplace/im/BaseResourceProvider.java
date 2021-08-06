@@ -9,6 +9,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.ClusterConnection;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +24,29 @@ import ca.uhn.fhir.parser.IParser;
 public abstract class BaseResourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(BaseResourceProvider.class);
 
+    HBaseAdmin hba = null;
+    
+   
+    
+    protected HBaseAdmin getConfiguration() throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
+        if(hba == null) {
+            Configuration config = HBaseConfiguration.create();
+
+            String path = this.getClass()
+              .getClassLoader()
+              .getResource("hbase-site.xml")
+              .getPath();
+            config.addResource(new Path(path));
+           
+            HBaseAdmin.available(config);
+//            ClusterConnection cc = new 
+//            hba = new HBaseAdmin(cc);
+        }
+        return hba;
+    }
+    
+    protected abstract void saveToDatabase();
+    
     
     protected void writeToFileSystem(String fileName, String json) throws IOException {
         Configuration configuration = new Configuration();
