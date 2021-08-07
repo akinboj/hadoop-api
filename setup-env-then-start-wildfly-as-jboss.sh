@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # NOTE: this file should have Unix (LF) EOL conversion performed on it to avoid: "env: can't execute 'bash ': No such file or directory"
 
+echo 10.1.106.91 pegacorn-fhirplace-hbase-master-86cc97584-tbjkh >> /etc/hosts
+
 echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with params $@"
 
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"

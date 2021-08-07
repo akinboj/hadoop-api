@@ -145,7 +145,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
         securityContext:
           privileged: false
         volumeMounts:
