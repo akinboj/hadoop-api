@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # NOTE: this file should have Unix (LF) EOL conversion performed on it to avoid: "env: can't execute 'bash ': No such file or directory"
 
+echo 10.1.106.91 pegacorn-fhirplace-hbase-master-86cc97584-tbjkh >> /etc/hosts
+
 echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with params $@"
 
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
@@ -36,3 +38,4 @@ ls -la /var/lib/pegacorn-keystores/
 # https://github.com/docker-library/postgres/blob/33bccfcaddd0679f55ee1028c012d26cd196537d/12/docker-entrypoint.sh line 281 vs
 # https://github.com/docker-library/postgres/blob/33bccfcaddd0679f55ee1028c012d26cd196537d/12/alpine/docker-entrypoint.sh line 281
 exec gosu jboss "/start-wildfly.sh" "$@"
+# exec gosu root "/start-wildfly.sh" "$@"

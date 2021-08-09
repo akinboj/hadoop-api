@@ -12,8 +12,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.ClusterConnection;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,28 +26,25 @@ import ca.uhn.fhir.parser.IParser;
 public abstract class BaseResourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(BaseResourceProvider.class);
 
-    HBaseAdmin hba = null;
+    Connection connection = null;
     
    
     
-    protected HBaseAdmin getConfiguration() throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
-        if(hba == null) {
+    protected Connection getConnection() throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
+        if(connection == null) {
+            LOG.info("No configuration found. Creating a new one");
             Configuration config = HBaseConfiguration.create();
 
-            String path = this.getClass()
-              .getClassLoader()
-              .getResource("hbase-site.xml")
-              .getPath();
-            config.addResource(new Path(path));
-           
-            HBaseAdmin.available(config);
-//            ClusterConnection cc = new 
-//            hba = new HBaseAdmin(cc);
+            String zooKeeperIP = (System.getenv("ZOOKEEPER_CLUSTER_IP"));
+            config.set("hbase.zookeeper.quorum", zooKeeperIP);
+            config.set("hbase.zookeeper.property.clientPort", "2181");
+
+            connection = ConnectionFactory.createConnection(config);
         }
-        return hba;
+        return connection;
     }
     
-    protected abstract void saveToDatabase() throws Exception;
+    protected abstract void saveToDatabase(IDomainResource resouce) throws Exception;
     
     
     protected void writeToFileSystem(String fileName, String json) throws IOException {

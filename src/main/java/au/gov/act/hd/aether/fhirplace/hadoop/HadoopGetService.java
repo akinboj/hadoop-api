@@ -34,8 +34,6 @@ public class HadoopGetService extends  RouteBuilderCommonBase{
 
         // Validate the request
         from("direct:retrieveRequest")
-        	.process(exchange -> {
-        		LOG.info("Yemi.  GET service called");
-        	});
+        	.bean(HBaseWriter.class, "write");
 	}                   
 }

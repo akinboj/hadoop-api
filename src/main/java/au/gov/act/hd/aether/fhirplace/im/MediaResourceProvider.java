@@ -1,5 +1,20 @@
 package au.gov.act.hd.aether.fhirplace.im;
 
+import java.io.IOException;
+
+import javax.enterprise.context.ApplicationScoped;
+
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.instance.model.api.IDomainResource;
+import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Media;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Read;
@@ -7,20 +22,6 @@ import ca.uhn.fhir.rest.annotation.ResourceParam;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-
-import org.hl7.fhir.r4.model.AuditEvent;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Media;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.hl7.fhir.instance.model.api.IBaseResource;
-
-import java.io.IOException;
-
-import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MediaResourceProvider extends BaseResourceProvider implements IResourceProvider {
@@ -79,10 +80,10 @@ protected String generateName() {
 
 
 @Override
-protected void saveToDatabase() {
+protected void saveToDatabase(IDomainResource resource) {
     // TODO Auto-generated method stub
     try {
-        HBaseAdmin admin = getConfiguration();
+        Connection connection = getConnection();
     } catch (MasterNotRunningException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();

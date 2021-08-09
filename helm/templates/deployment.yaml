@@ -100,6 +100,8 @@ spec:
           value: "{{ .Values.jvmMaxHeapSizeMB }}m"
         - name: CLUSTER_IP
           value: {{ .Values.clusterIP }}
+        - name: ZOOKEEPER_CLUSTER_IP
+          value: {{ .Values.zooKeeperIP }}
         # Set the minimum memory that will be available on the node to assign to the container to be the jvmMaxHeapSizeMB plus 128 MB 
         # for the native heap and operation system processes associated with running Java
         # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/#motivation-for-memory-requests-and-limits
@@ -141,7 +143,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
         securityContext:
           privileged: false
         volumeMounts:
