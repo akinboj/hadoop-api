@@ -76,4 +76,13 @@ public abstract class BaseResourceProvider {
         
         return parsedResource;
     }
+    
+    protected IBaseResource parseResourceToJsonString(String json) {
+        FhirContext ctx = FhirContext.forR4();
+
+        IParser parser = ctx.newJsonParser();
+        IBaseResource parsedResource = parser.parseResource(json);
+        
+        return parsedResource;
+    }
 }

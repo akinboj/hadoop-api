@@ -1,6 +1,7 @@
 package au.gov.act.hd.aether.fhirplace.im;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 import javax.enterprise.context.ApplicationScoped;
 
@@ -10,7 +11,9 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
@@ -21,6 +24,8 @@ import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.IdType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sun.tools.sjavac.Log;
 
 import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.IdParam;
@@ -55,37 +60,63 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
 
     @Read()
     public AuditEvent read(@IdParam IdType theId) {
-//        AuditEvent retVal = myEvents.get(theId.getIdPart());
-//        if (retVal == null) {
-        byte[] b = Bytes.toBytes(ROW_PREFIX + theId.getValue());
-        LOG.info("Searching for: " + b);
-        throw new ResourceNotFoundException(theId);
-//        }
-//        return retVal;
+        try {
+            Connection connection = getConnection();
+            Table table = connection.getTable(TABLE_NAME);
+            Get g = new Get(Bytes.toBytes(ROW_PREFIX + theId.getIdPart()));
+            LOG.info("un-byted row name: " + ROW_PREFIX + theId.getIdPart());
+            LOG.info("Returned Value for " + theId.getIdPart()+ ": " + g.toString());
+            Result result = table.get(g);
+            if(result.isEmpty()) {
+                throw new ResourceNotFoundException(theId);
+            }
+            LOG.info("Result not empty. Size: " + result.size());
+          
+            byte [] data = result.getValue(CF_NAME,QUALIFIER);
+            String json = Bytes.toString(data);
+            AuditEvent audit = (AuditEvent) parseResourceToJsonString(json);
+            
+            return audit;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new ResourceNotFoundException(theId);
+        }
+       
     }
 
     @Create
     public MethodOutcome createEvent(@ResourceParam AuditEvent theEvent) {
-        // Give the resource the next sequential ID
-        int id = myNextId++;
-        theEvent.setId(new IdType(id));
-
-        LOG.info("AuditEvent registered: " + theEvent.fhirType());
-
-        try {
-            saveToDatabase(theEvent);
-//           writeToFileSystem(fileName, parsedResource);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        
+        long time = Calendar.getInstance().getTimeInMillis();
+        for(int i = 0; i < 1000; i++) {
+            // Give the resource the next sequential ID
+            int id = myNextId;
+            theEvent.setId(new IdType(id));
+    
+            LOG.info("AuditEvent registered: " + theEvent.fhirType());
+    
+            try {
+                saveToDatabase(theEvent);
+    //           writeToFileSystem(fileName, parsedResource);
+    
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            ++myNextId;
+            
         }
         // Inform the server of the ID for the newly stored resource
+
+        long totalTime = Calendar.getInstance().getTimeInMillis() - time;
+        LOG.info("Total time for 1000 records (msec): " + totalTime );
+        
         return new MethodOutcome().setId(theEvent.getIdElement());
     }
 
     @Override
     protected String generateName() {
-        return ROW_PREFIX + myNextId++;
+        return ROW_PREFIX + myNextId;
     }
 
     @Override
