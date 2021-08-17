@@ -4,7 +4,6 @@
 package au.gov.act.hd.aether.fhirplace.hadoop;
 
 import javax.enterprise.context.ApplicationScoped;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +33,6 @@ public class HadoopGetService extends  RouteBuilderCommonBase{
 
         // Validate the request
         from("direct:retrieveRequest")
-        	.process(exchange -> {
-        		LOG.info("Yemi.  GET service called");
-        	});
+        		.bean(StoreHadoop.class);
+        	};
 	}                   
-}

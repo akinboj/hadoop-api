@@ -5,19 +5,17 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.jgss.GSSException;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
 import javax.security.auth.login.LoginException;
 
 public class FileWriteToHDFS {
 	private static final Logger LOG = LoggerFactory.getLogger(FileWriteToHDFS.class);
 
-  public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException {
+  public void writeFileToHDFS() throws IOException, GSSException, LoginException, InterruptedException {
 		  // set kerberos host and realm
 		  String realm = "PEGACORN-FHIRPLACE-NAMENODE.SITE-A";
 	      String kdcServer = (System.getenv("KDC_SERVER"));
