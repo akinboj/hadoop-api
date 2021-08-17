@@ -98,14 +98,14 @@ spec:
               fieldPath: spec.serviceAccountName
         - name: JVM_MAX_HEAP_SIZE
           value: "{{ .Values.jvmMaxHeapSizeMB }}m"
-        - name: CLUSTER_IP
-          value: {{ .Values.clusterIP }}
         - name: NAMENODE_IP
-          value: {{ .Values.masterPodIP }}
+          value: {{ .Values.namenodeIP }}
         - name: LOGIN_USER
           value: {{ .Values.loginUser }}
         - name: KEYTAB_PATH
           value: {{ .Values.keyTabPath }}
+        - name: KDC_SERVER
+          value: {{ .Values.kdcServer }}
         # Set the minimum memory that will be available on the node to assign to the container to be the jvmMaxHeapSizeMB plus 128 MB 
         # for the native heap and operation system processes associated with running Java
         # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/#motivation-for-memory-requests-and-limits
@@ -120,7 +120,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
         name: wildfly
         ports:
         - containerPort: {{ add 0 (.Values.basePortInsidePod | default .Values.basePort) }}
@@ -147,7 +147,7 @@ spec:
             path: /health
             port: 9993
             scheme: HTTPS
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
         securityContext:
           privileged: false
         volumeMounts:

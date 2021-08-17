@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # NOTE: this file should have Unix (LF) EOL conversion performed on it to avoid: "env: can't execute 'bash ': No such file or directory"
 
+REALM=PEGACORN-FHIRPLACE-NAMENODE.SITE-A
+
 echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with params $@"
 
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
 echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 
 # kerberos client
-echo ${NAMENODE_IP} pegacorn-fhirplace-namenode.kerberos.com >> /etc/hosts
+sed -i "s/kdcserver/${KDC_SERVER}:88/g" /etc/krb5.conf
+sed -i "s/kdcadmin/${KDC_SERVER}:749/g" /etc/krb5.conf
+
+kinit fhirplace/${MY_HOST_IP}@$REALM -kt ${KEYTAB_DIR}/fhirplace.hdfs.keytab -V &
+wait -n
+echo "Kerberos authentication successful."
 
 # Copy the certificate files based on
 # 1. https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
