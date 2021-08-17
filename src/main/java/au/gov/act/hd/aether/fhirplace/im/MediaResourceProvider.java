@@ -6,7 +6,6 @@ import javax.enterprise.context.ApplicationScoped;
 
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -53,30 +52,25 @@ public class MediaResourceProvider extends BaseResourceProvider implements IReso
    public MethodOutcome createMedia(@ResourceParam Media theEvent) {
        // Give the resource the next sequential ID
        int id = myNextId++;
-       theEvent.setId(new IdType(id));
-
-       LOG.info("Media registered: " + theEvent.fhirType());
-
-       try {
-           String fileName = generateName();
-           String parsedResource = parseResourceToJsonString(theEvent);
-           LOG.info("Media parsed: " + parsedResource);
-           
-          writeToFileSystem(fileName, parsedResource);
-
-
-       } catch (IOException e) {
-           // TODO Auto-generated catch block
-           e.printStackTrace();
-       }
-       // Inform the server of the ID for the newly stored resource
+//       theEvent.setId(new IdType(id));
+//
+//       LOG.info("Media registered: " + theEvent.fhirType());
+//
+//       try {
+////           String fileName = generateName();
+//           String parsedResource = parseResourceToJsonString(theEvent);
+//           LOG.info("Media parsed: " + parsedResource);
+//           
+////          writeToFileSystem(fileName, parsedResource);
+//
+//
+//       } catch (IOException e) {
+//           // TODO Auto-generated catch block
+//           e.printStackTrace();
+//       }
+//       // Inform the server of the ID for the newly stored resource
        return new MethodOutcome().setId(theEvent.getIdElement());
    }
-
-@Override
-protected String generateName() {
-    return "Media-" + myNextId;
-}
 
 
 @Override

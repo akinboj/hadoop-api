@@ -12,7 +12,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -26,7 +25,7 @@ import ca.uhn.fhir.parser.IParser;
 public abstract class BaseResourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(BaseResourceProvider.class);
 
-    Connection connection = null;
+    protected static Connection connection = null;
     
    
     
@@ -66,7 +65,6 @@ public abstract class BaseResourceProvider {
         fileSystem.close();
     }
     
-    protected abstract String generateName();
     
     protected String parseResourceToJsonString(IDomainResource resource) {
         FhirContext ctx = FhirContext.forR4();
@@ -77,7 +75,7 @@ public abstract class BaseResourceProvider {
         return parsedResource;
     }
     
-    protected IBaseResource parseResourceToJsonString(String json) {
+    protected IBaseResource parseResourceFromJsonString(String json) {
         FhirContext ctx = FhirContext.forR4();
 
         IParser parser = ctx.newJsonParser();
