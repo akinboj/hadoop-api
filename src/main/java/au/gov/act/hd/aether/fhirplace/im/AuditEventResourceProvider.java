@@ -36,6 +36,7 @@ import ca.uhn.fhir.rest.annotation.Create;
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.ResourceParam;
+import ca.uhn.fhir.rest.annotation.Update;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
@@ -120,6 +121,24 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         
         return new MethodOutcome().setId(theEvent.getIdElement());
     }
+
+    
+    
+    @Update
+    public MethodOutcome updateEvent(@ResourceParam AuditEvent theEvent) {
+        LOG.debug(".updateEvent(): Entry, theEvent (AuditEvent) --> {}", theEvent);
+        LOG.info("Update called. ID: " + theEvent.getId());
+        try {
+            saveToDatabase(theEvent);
+//           writeToFileSystem(fileName, parsedResource);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new MethodOutcome().setId(theEvent.getIdElement());
+    }
+
+
 
 
     @Override
@@ -212,6 +231,7 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
     
     private void addPurposeOfEvent(AuditEvent resource, Put row) {
         if(resource.getPurposeOfEvent() != null) {
+            LOG.info("Purpose of event: " + resource.getPurposeOfEvent().toString());
             StringBuilder sb = new StringBuilder();
             for(CodeableConcept purpose : resource.getPurposeOfEvent()) {
                 sb.append(purpose.getTextElement());
