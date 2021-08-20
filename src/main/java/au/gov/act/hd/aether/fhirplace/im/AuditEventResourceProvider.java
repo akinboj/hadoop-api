@@ -102,8 +102,10 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         long time = Calendar.getInstance().getTimeInMillis();
 //        for(int i = 0; i < 1000; i++) {
   
-        theEvent.setId("Audit-" + nextId++);
+        theEvent.getIdElement().setId("Audit-" + nextId++);
             LOG.info("AuditEvent registered. ID: " + theEvent.getId());
+            LOG.info("ID Base: " + theEvent.getIdBase() + ". IDElement ID: " + theEvent.getIdElement().getId()
+                    + ". IdElement Part: " + theEvent.getIdElement().getIdPart());
   
             try {
                 saveToDatabase(theEvent);
@@ -127,7 +129,7 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
     @Update
     public MethodOutcome updateEvent(@ResourceParam AuditEvent theEvent) {
         LOG.debug(".updateEvent(): Entry, theEvent (AuditEvent) --> {}", theEvent);
-        LOG.info("Update called. ID: " + theEvent.getId());
+        LOG.info("Update called. ID: " + theEvent.getIdElement().getIdPart());
         try {
             saveToDatabase(theEvent);
 //           writeToFileSystem(fileName, parsedResource);
@@ -162,7 +164,9 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
 
     private void saveData(Connection connection, AuditEvent resource) throws IOException {
         Table table = connection.getTable(TABLE_NAME);
-        Put row = new Put(Bytes.toBytes(resource.getId()));
+        String id = resource.getIdElement() != null ? resource.getIdElement().getIdPart() : resource.getId();
+        LOG.info("Save data. ID: " + id);
+        Put row = new Put(Bytes.toBytes(id));
         
         addAgent(resource, row);
         addUpdateDate(resource, row);
@@ -231,7 +235,6 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
     
     private void addPurposeOfEvent(AuditEvent resource, Put row) {
         if(resource.getPurposeOfEvent() != null) {
-            LOG.info("Purpose of event: " + resource.getPurposeOfEvent().toString());
             StringBuilder sb = new StringBuilder();
             for(CodeableConcept purpose : resource.getPurposeOfEvent()) {
                 sb.append(purpose.getTextElement());
