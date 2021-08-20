@@ -9,6 +9,5 @@ Create-Cert-Set -certSubject 'pegacorn-fhirplace-bigdata-api.site-a' -certPwd 'P
 
 kubectl create secret generic pegacorn-fhirplace-bigdata-api-secrets --from-literal=keyPassword="Peg@cornK3yHD" --from-literal=truststorePassword="Peg@cornTrustSt0reHD" --namespace=site-a
 
-
-helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,clusterIP=10.152.183.163,masterPodIP=10.1.217.153,hostPathCerts=/data/certificates,hostPathKeytab=/data/hadoop-keytab,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,loginUser=jboss@PEGACORN-FHIRPLACE-NAMENODE.SITE-A,keyTabPath=/etc/ssl/keytab/jboss.hdfs.keytab,numOfPods=1 helm
+helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,kdcServer=192.168.2.25,namenodeIP=10.152.183.235,hostPathCerts=/data/certificates,hostPathKeytab=/data/kdc-keytab,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,loginUser=jboss/192.168.2.25@PEGACORN-FHIRPLACE-NAMENODE.SITE-A,keyTabPath=/etc/ssl/keytab/jboss.hdfs.keytab,numOfPods=1 helm
 
