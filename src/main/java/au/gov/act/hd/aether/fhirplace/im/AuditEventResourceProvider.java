@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -141,6 +142,36 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         return new MethodOutcome().setId(theEvent.getIdElement());
     }
 
+    public MethodOutcome createBulk(@ResourceParam List<AuditEvent> events) {
+        try {
+            Connection connection = getConnection();
+            createTable(connection.getAdmin());
+            saveBatch(connection, events);
+        } catch (MasterNotRunningException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ZooKeeperConnectionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void saveBatch(Connection connection, List<AuditEvent> events) throws IOException {
+        List<Put> rows = new ArrayList<Put>();
+        for (AuditEvent event : events) {
+
+            Put row = processToPut(event);
+        }
+        Table table = connection.getTable(TABLE_NAME);
+        table.put(rows);
+//        LOG.info("Save successful. Id: " + Bytes.toString(row.getRow()));
+        table.close();
+    }
+
     public void startBulk() throws IOException {
         LOG.info("Commencing bulk transaction");
         Connection connection = getConnection();
@@ -150,13 +181,26 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         long elapsed = startTime;
         int offset = new Random().nextInt(100000000);
         offset = offset - (offset % 1000);
+        
+        boolean saveAsBatch = false;
+        List<AuditEvent> events= new ArrayList<>();
         for (int i = offset; i < (offset + 100000); i++) {
             AuditEvent audit = generateAuditEvent("Audit-" + i);
-            saveData(connection, audit);
-
+            if(saveAsBatch) {
+               events.add(audit);
+            } else {
+                saveData(connection, audit);
+            }
             if (i % 1000 == 0) {
-                LOG.info("Last 1000 records: " + (Calendar.getInstance().getTimeInMillis() - elapsed));
+                if(saveAsBatch) {
+                    saveBatch(connection, events);
+                    LOG.info("Last 1000 records (batch): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
+                    events.clear();
+                } else {
+                    LOG.info("Last 1000 records (series): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
+                }
                 elapsed = Calendar.getInstance().getTimeInMillis();
+                saveAsBatch = !saveAsBatch;
             }
         }
         LOG.info("Total time for 100000 records: " + (elapsed - startTime));
@@ -182,7 +226,6 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
 
     @Override
     protected void saveToDatabase(IDomainResource resource) {
-        // TODO Auto-generated method stub
         try {
             Connection connection = getConnection();
             createTable(connection.getAdmin());
@@ -202,6 +245,13 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
     private void saveData(Connection connection, AuditEvent resource) throws IOException {
         Table table = connection.getTable(TABLE_NAME);
 //        LOG.info("Save data. ID: " + resource.getIdElement().getId());
+        Put row = processToPut(resource);
+        table.put(row);
+//        LOG.info("Save successful. Id: " + Bytes.toString(row.getRow()));
+        table.close();
+    }
+
+    private Put processToPut(AuditEvent resource) {
         Put row = new Put(Bytes.toBytes(resource.getIdElement().getId()));
 
         addAgent(resource, row);
@@ -210,9 +260,7 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         addSource(resource, row);
         addPurposeOfEvent(resource, row);
         row.addColumn(CF2, Q_BODY, Bytes.toBytes(parseResourceToJsonString(resource)));
-        table.put(row);
-//        LOG.info("Save successful. Id: " + Bytes.toString(row.getRow()));
-        table.close();
+        return row;
     }
 
     private void addAgent(AuditEvent resource, Put row) {
