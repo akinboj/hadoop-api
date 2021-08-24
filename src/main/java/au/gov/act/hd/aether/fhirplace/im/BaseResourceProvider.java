@@ -26,7 +26,7 @@ public abstract class BaseResourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(BaseResourceProvider.class);
 
     protected static Connection connection = null;
-    
+    FhirContext ctx = FhirContext.forR4();
    
     
     protected Connection getConnection() throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
@@ -67,8 +67,7 @@ public abstract class BaseResourceProvider {
     
     
     protected String parseResourceToJsonString(IDomainResource resource) {
-        FhirContext ctx = FhirContext.forR4();
-
+     
         IParser parser = ctx.newJsonParser();
         String parsedResource = parser.encodeResourceToString(resource);
         
@@ -76,8 +75,7 @@ public abstract class BaseResourceProvider {
     }
     
     protected IBaseResource parseResourceFromJsonString(String json) {
-        FhirContext ctx = FhirContext.forR4();
-
+    
         IParser parser = ctx.newJsonParser();
         IBaseResource parsedResource = parser.parseResource(json);
         

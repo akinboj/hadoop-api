@@ -5,8 +5,10 @@ import java.io.IOException;
 import javax.enterprise.context.ApplicationScoped;
 
 import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.hl7.fhir.r4.model.IdType;
@@ -26,6 +28,11 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 public class MediaResourceProvider extends BaseResourceProvider implements IResourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(MediaResourceProvider.class);
     private int myNextId = 2;
+    
+    private static final TableName TABLE_NAME = TableName.valueOf("MEDIA");
+    private static final byte[] CF1 = Bytes.toBytes("INFO");
+    private static final byte[] CF2 = Bytes.toBytes("DATA");
+    private static final byte[] CF3 = Bytes.toBytes("FILE"); //TODO is this right?
 
 
    /**
