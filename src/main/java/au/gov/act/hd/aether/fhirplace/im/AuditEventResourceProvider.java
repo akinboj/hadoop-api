@@ -164,7 +164,8 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         List<Put> rows = new ArrayList<Put>();
         for (AuditEvent event : events) {
 
-            Put row = processToPut(event);
+            rows.add(processToPut(event));
+            
         }
         Table table = connection.getTable(TABLE_NAME);
         table.put(rows);
@@ -180,31 +181,35 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         long startTime = Calendar.getInstance().getTimeInMillis();
         long elapsed = startTime;
         int offset = new Random().nextInt(100000000);
-        offset = offset - (offset % 1000);
-        
-        boolean saveAsBatch = false;
+        offset = offset - (offset % 2000);
+        LOG.info("Offset: " + offset);        
+        boolean saveAsBatch = true;
         List<AuditEvent> events= new ArrayList<>();
-        for (int i = offset; i < (offset + 100000); i++) {
-            AuditEvent audit = generateAuditEvent("Audit-" + i);
-            if(saveAsBatch) {
-               events.add(audit);
-            } else {
-                saveData(connection, audit);
-            }
-            if (i % 1000 == 0) {
+        for (int interval = 250; interval <= 2500; interval += 250) {
+            for (int i = offset; i < (offset + 100000); i++) {
+                AuditEvent audit = generateAuditEvent("Audit-" + i);
                 if(saveAsBatch) {
-                    saveBatch(connection, events);
-                    LOG.info("Last 1000 records (batch): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
-                    events.clear();
+                   events.add(audit);
                 } else {
-                    LOG.info("Last 1000 records (series): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
+                    saveData(connection, audit);
                 }
-                elapsed = Calendar.getInstance().getTimeInMillis();
-                saveAsBatch = !saveAsBatch;
+                if (i % interval == 0 && i > offset) {
+                    if(saveAsBatch) {
+                        saveBatch(connection, events);
+//                        LOG.info("Last " + interval + " records (batch): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
+                        events.clear();
+                    } else {
+                        LOG.info("Last 2000 records (series): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
+                    }
+                    elapsed = Calendar.getInstance().getTimeInMillis();
+    //                saveAsBatch = !saveAsBatch;
+                }
             }
+            LOG.info("Total time for 100000 records in batches of " + interval + ": " + (elapsed - startTime));
+            LOG.info("Average time per 1000 records (ms): " + ((elapsed - startTime) / 100));
+            offset += 100000;
+            startTime = elapsed;
         }
-        LOG.info("Total time for 100000 records: " + (elapsed - startTime));
-        LOG.info("Average time per record (ms): " + ((elapsed - startTime) / 100000));
     }
 
     private AuditEvent generateAuditEvent(String nextId) {
