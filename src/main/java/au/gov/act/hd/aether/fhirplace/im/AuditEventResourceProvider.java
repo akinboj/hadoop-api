@@ -186,8 +186,22 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         boolean saveAsBatch = true;
         List<AuditEvent> events= new ArrayList<>();
         for (int interval = 250; interval <= 2500; interval += 250) {
-            for (int i = offset; i < (offset + 100000); i++) {
-                AuditEvent audit = generateAuditEvent("Audit-" + i);
+            for (int i = offset; i <= (offset + 100000); i++) {
+                String prefix = "a";
+                switch (i % 4) {
+                case 1: 
+                    prefix = "b";
+                    break;
+                case 2:
+                    prefix = "c";
+                    break;
+                case 3:
+                    prefix = "d";
+                    break;
+                default:
+                    prefix = "a";    
+                }
+                AuditEvent audit = generateAuditEvent(prefix + "Audit-" + i);
                 if(saveAsBatch) {
                    events.add(audit);
                 } else {

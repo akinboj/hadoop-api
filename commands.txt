@@ -10,9 +10,14 @@ docker build --rm --build-arg IMAGE_BUILD_TIMESTAMP="%date% %time%" -t pegacorn-
 helm upgrade pegacorn-fhirplace-bigdata-api-site-a --install --namespace site-a --set serviceName=pegacorn-fhirplace-bigdata-api,imagePullPolicy=Never,basePort=32510,basePortInsidePod=8443,clusterIP=[NAMENODE-IP],zooKeeperIP=[ZOOKEEPER-IP],hostPathCerts=/data/certificates,imageTag=1.0.0-snapshot,jvmMaxHeapSizeMB=768,wildflyLogLevel=INFO,javaxNetDebug=none,wildflyAdminUser=admin,wildflyAdminPwd=Pega@dm1n,numOfPods=1 helm
 
 URL to call in Postman
-GET - https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopGET (Returns sample text -- not fully implemented)
+GET - 
+https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/fhir/AuditEvent/{id}
+https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/fhir/AuditEvent/startBulk - bulk
+(Note: before running the bulk, please call a get with a nonsense id. THe very first call to the system throws a connection error, but subsequent calls work fine).
 
-POST - https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopPOST
+POST - 
+https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/fhir/AuditEvent/ - does a single commit
+https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopPOST
 
 ### You do not need to run this -- certificates have created and are provided
 Create-Cert-Set -certSubject 'pegacorn-fhirplace-bigdata-api.site-a' -certPwd 'Peg@cornK3yHD' -createKeystore $True -truststorePwd 'Peg@cornTrustSt0reHD'
