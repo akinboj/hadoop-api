@@ -4,13 +4,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import javax.enterprise.context.ApplicationScoped;
 
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.hbase.CompareOperator;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -21,14 +25,22 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+import org.apache.hadoop.hbase.filter.ColumnValueFilter;
+import org.apache.hadoop.hbase.filter.DependentColumnFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentComponent;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventEntityComponent;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.IdType;
@@ -46,383 +58,479 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 
 @ApplicationScoped
 public class AuditEventResourceProvider extends BaseResourceProvider implements IResourceProvider {
-	private static final Logger LOG = LoggerFactory.getLogger(AuditEventResourceProvider.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuditEventResourceProvider.class);
 
-	private static final TableName TABLE_NAME = TableName.valueOf("AUDIT_EVENT");
-	private static final byte[] CF1 = Bytes.toBytes("INFO");
-	private static final byte[] CF2 = Bytes.toBytes("DATA");
-	private static final byte[] Q_NAME = Bytes.toBytes("NAME");
-	private static final byte[] Q_UPDATE = Bytes.toBytes("DATE");
-	private static final byte[] Q_PSTART = Bytes.toBytes("START");
-	private static final byte[] Q_PEND = Bytes.toBytes("END");
-	private static final byte[] Q_TYPE = Bytes.toBytes("TYPE");
-	private static final byte[] Q_PURPOSE = Bytes.toBytes("PURPOSE");
-	private static final byte[] Q_BODY = Bytes.toBytes("BODY");
+    private static final TableName TABLE_NAME = TableName.valueOf("AUDIT_EVENT");
+    private static final byte[] CF1 = Bytes.toBytes("INFO");
+    private static final byte[] CF2 = Bytes.toBytes("DATA");
+    private static final byte[] Q_NAME = Bytes.toBytes("NAME");
+    private static final byte[] Q_UPDATE = Bytes.toBytes("DATE");
+    private static final byte[] Q_PSTART = Bytes.toBytes("START");
+    private static final byte[] Q_PEND = Bytes.toBytes("END");
+    private static final byte[] Q_TYPE = Bytes.toBytes("TYPE");
+    private static final byte[] Q_PURPOSE = Bytes.toBytes("PURPOSE");
+    private static final byte[] Q_BODY = Bytes.toBytes("BODY");
 
-	private int nextId;
+    private int nextId;
 
-	/**
-	 * Constructor
-	 */
-	public AuditEventResourceProvider() {
+    /**
+     * Constructor
+     */
+    public AuditEventResourceProvider() {
 
-	}
+    }
 
-	@Override
-	public Class<? extends IBaseResource> getResourceType() {
-		return AuditEvent.class;
-	}
+    @Override
+    public Class<? extends IBaseResource> getResourceType() {
+        return AuditEvent.class;
+    }
 
-	@Read()
-	public AuditEvent read(@IdParam IdType theId) {
-		LOG.info("Read generated: " + theId.getIdPart());
-		if ("startBulk".equals(theId.getIdPart())) {
-			try {
-				startBulk();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		}
-		
-		if ("startAsync".equals(theId.getIdPart())) {
-			startBulkAsync();
-		}
-		
+    @Read()
+    public AuditEvent read(@IdParam IdType theId) {
+        LOG.info("Read generated: " + theId.getIdPart());
+        if ("startBulk".equals(theId.getIdPart())) {
+            try {
+                startBulk();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+        }
 
-		try {
-			Connection connection = getConnection();
-			Table table = connection.getTable(TABLE_NAME);
-			Get g = new Get(Bytes.toBytes(theId.getIdPart()));
-			Result result = table.get(g);
-			if (result.isEmpty()) {
-				throw new ResourceNotFoundException(theId);
-			}
-			LOG.info("Result not empty. Size: " + result.size());
+        if ("startAsync".equals(theId.getIdPart())) {
+            startBulkAsync();
+        }
+        //Test out scan methods - maybe I should extract this to a function
+//        List<AuditEvent> results = getByUser("Grag");
+//        LOG.info("Results expected - 0. Results returned - " + results.size());
+//        results = getByUser("Grah");
+//        LOG.info("Results expected - 1. Results returned - " + results.size());
+//        results = getByUser("Grai");
+//        LOG.info("Results expected - 0. Results returned - " + results.size());
+//
+        try {
+            Connection connection = getConnection();
+            Table table = connection.getTable(TABLE_NAME);
+            Get g = new Get(Bytes.toBytes(theId.getIdPart()));
+            Result result = table.get(g);
+            if (result.isEmpty()) {
+                throw new ResourceNotFoundException(theId);
+            }
+            LOG.info("Result not empty. Size: " + result.size());
 
-			byte[] data = result.getValue(CF2, Q_BODY);
-			String json = Bytes.toString(data);
-			AuditEvent audit = (AuditEvent) parseResourceFromJsonString(json);
+            byte[] data = result.getValue(CF2, Q_BODY);
+            String json = Bytes.toString(data);
+            AuditEvent audit = (AuditEvent) parseResourceFromJsonString(json);
 
-			return audit;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new ResourceNotFoundException(theId);
-		}
+            return audit;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            throw new ResourceNotFoundException(theId);
+        }
 
-	}
+    }
 
-	@Create
-	public MethodOutcome createEvent(@ResourceParam AuditEvent theEvent) {
-		theEvent.getIdElement().setId("Audit-" + nextId++);
-		LOG.info("AuditEvent registered. ID: " + theEvent.getId());
-		LOG.info("ID Base: " + theEvent.getIdBase() + ". IDElement ID: " + theEvent.getIdElement().getId()
-				+ ". IdElement Part: " + theEvent.getIdElement().getIdPart());
+    @Create
+    public MethodOutcome createEvent(@ResourceParam AuditEvent theEvent) {
+        theEvent.getIdElement().setId("Audit-" + nextId++);
+        LOG.info("AuditEvent registered. ID: " + theEvent.getId());
+        LOG.info("ID Base: " + theEvent.getIdBase() + ". IDElement ID: " + theEvent.getIdElement().getId() + ". IdElement Part: "
+                + theEvent.getIdElement().getIdPart());
 
-		try {
-			saveToDatabase(theEvent);
-			// writeToFileSystem(fileName, parsedResource);
+        try {
+            saveToDatabase(theEvent);
+            // writeToFileSystem(fileName, parsedResource);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 //        }
-		// Inform the server of the ID for the newly stored resource
+        // Inform the server of the ID for the newly stored resource
 
-		return new MethodOutcome().setId(theEvent.getIdElement());
-	}
+        return new MethodOutcome().setId(theEvent.getIdElement());
+    }
 
-	@Update
-	public MethodOutcome updateEvent(@ResourceParam AuditEvent theEvent) {
-		LOG.debug(".updateEvent(): Entry, theEvent (AuditEvent) --> {}", theEvent);
-		LOG.info("Update called. ID: " + theEvent.getIdElement().getIdPart());
-		try {
-			saveToDatabase(theEvent);
+    @Update
+    public MethodOutcome updateEvent(@ResourceParam AuditEvent theEvent) {
+        LOG.debug(".updateEvent(): Entry, theEvent (AuditEvent) --> {}", theEvent);
+        LOG.info("Update called. ID: " + theEvent.getIdElement().getIdPart());
+        try {
+            saveToDatabase(theEvent);
 //           writeToFileSystem(fileName, parsedResource);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return new MethodOutcome().setId(theEvent.getIdElement());
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new MethodOutcome().setId(theEvent.getIdElement());
+    }
 
-	public MethodOutcome createBulk(@ResourceParam List<AuditEvent> events) {
-		try {
-			Connection connection = getConnection();
-			createTable(connection.getAdmin());
-			saveBatch(connection, events);
-		} catch (MasterNotRunningException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ZooKeeperConnectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-	}
+    public MethodOutcome createBulk(@ResourceParam List<AuditEvent> events) {
+        try {
+            Connection connection = getConnection();
+            createTable(connection.getAdmin());
+            saveBatch(connection, events);
+        } catch (MasterNotRunningException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ZooKeeperConnectionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-	private void saveBatch(Connection connection, List<AuditEvent> events) throws IOException {
-		List<Put> rows = new ArrayList<Put>();
-		for (AuditEvent event : events) {
+    private void saveBatch(Connection connection, List<AuditEvent> events) throws IOException {
+        List<Put> rows = new ArrayList<Put>();
+        for (AuditEvent event : events) {
 
-			rows.add(processToPut(event));
+            rows.add(processToPut(event));
 
-		}
-		Table table = connection.getTable(TABLE_NAME);
-		table.put(rows);
+        }
+        Table table = connection.getTable(TABLE_NAME);
+        table.put(rows);
 //        LOG.info("Save successful. Id: " + Bytes.toString(row.getRow()));
-		table.close();
-	}
+        table.close();
+    }
 
-	public void startBulk() throws IOException {
-		LOG.info("Commencing bulk transaction");
-		Connection connection = getConnection();
-		createTable(connection.getAdmin());
+    public void startBulk() throws IOException {
+        LOG.info("Commencing bulk transaction");
+        Connection connection = getConnection();
+        createTable(connection.getAdmin());
 
-		long startTime = Calendar.getInstance().getTimeInMillis();
-		long elapsed = startTime;
-		int offset = new Random().nextInt(100000000);
-		offset = offset - (offset % 2000);
-		LOG.info("Offset: " + offset);
-		boolean saveAsBatch = true;
-		List<AuditEvent> events = new ArrayList<>();
-		for (int interval = 250; interval <= 2500; interval += 250) {
-			for (int i = offset; i <= (offset + 100000); i++) {
-				String prefix = "a";
-				switch (i % 4) {
-				case 1:
-					prefix = "b";
-					break;
-				case 2:
-					prefix = "c";
-					break;
-				case 3:
-					prefix = "d";
-					break;
-				default:
-					prefix = "a";
-				}
-				AuditEvent audit = generateAuditEvent(prefix + "Audit-" + i);
-				if (saveAsBatch) {
-					events.add(audit);
-				} else {
-					saveData(connection, audit);
-				}
-				if (i % interval == 0 && i > offset) {
-					if (saveAsBatch) {
-						saveBatch(connection, events);
+        long startTime = Calendar.getInstance().getTimeInMillis();
+        long elapsed = startTime;
+        int offset = new Random().nextInt(100000000);
+        offset = offset - (offset % 2000);
+        LOG.info("Offset: " + offset);
+        boolean saveAsBatch = true;
+        List<AuditEvent> events = new ArrayList<>();
+        for (int interval = 250; interval <= 2500; interval += 250) {
+            for (int i = offset; i <= (offset + 100000); i++) {
+                String prefix = "a";
+                switch (i % 4) {
+                case 1:
+                    prefix = "b";
+                    break;
+                case 2:
+                    prefix = "c";
+                    break;
+                case 3:
+                    prefix = "d";
+                    break;
+                default:
+                    prefix = "a";
+                }
+                AuditEvent audit = generateAuditEvent(prefix + "Audit-" + i);
+                if (saveAsBatch) {
+                    events.add(audit);
+                } else {
+                    saveData(connection, audit);
+                }
+                if (i % interval == 0 && i > offset) {
+                    if (saveAsBatch) {
+                        saveBatch(connection, events);
 //                        LOG.info("Last " + interval + " records (batch): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
-						events.clear();
-					} else {
-						LOG.info("Last 2000 records (series): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
-					}
-					elapsed = Calendar.getInstance().getTimeInMillis();
-					// saveAsBatch = !saveAsBatch;
-				}
-			}
-			LOG.info("Total time for 100000 records in batches of " + interval + ": " + (elapsed - startTime));
-			LOG.info("Average time per 1000 records (ms): " + ((elapsed - startTime) / 100));
-			offset += 100000;
-			startTime = elapsed;
-		}
-	}
+                        events.clear();
+                    } else {
+                        LOG.info("Last 2000 records (series): " + (Calendar.getInstance().getTimeInMillis() - elapsed));
+                    }
+                    elapsed = Calendar.getInstance().getTimeInMillis();
+                    // saveAsBatch = !saveAsBatch;
+                }
+            }
+            LOG.info("Total time for 100000 records in batches of " + interval + ": " + (elapsed - startTime));
+            LOG.info("Average time per 1000 records (ms): " + ((elapsed - startTime) / 100));
+            offset += 100000;
+            startTime = elapsed;
+        }
+    }
 
-	private void startBulkAsync() {
-		Thread newThread = new Thread(() -> {
-			try {
-				keepThrowingRecordsAtTheSolution();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
-		newThread.start();
-	}
+    private void startBulkAsync() {
+        Thread newThread = new Thread(() -> {
+            try {
+                keepThrowingRecordsAtTheSolution();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
+        newThread.start();
+    }
 
-	private void keepThrowingRecordsAtTheSolution() throws IOException {
-		Connection connection = getConnection();
-		createTable(connection.getAdmin());
-		
-		long startTime = Calendar.getInstance().getTimeInMillis();
-		long elapsedTime = startTime;
-		int offset = new Random().nextInt(100000000);
-		int recordsPerSecond = 2000;
+    private void keepThrowingRecordsAtTheSolution() throws IOException {
+        Connection connection = getConnection();
+        createTable(connection.getAdmin());
 
-		for (int i = 1; i <= 20000; i++) {
-			elapsedTime = Calendar.getInstance().getTimeInMillis();
-			List<AuditEvent> events = new ArrayList<>();
-			for (int j = offset; j < (offset + recordsPerSecond); j++) {
-				String prefix = "a";
-				switch (i % 4) {
-				case 1:
-					prefix = "b";
-					break;
-				case 2:
-					prefix = "c";
-					break;
-				case 3:
-					prefix = "d";
-					break;
-				default:
-					prefix = "a";
-				}
-				AuditEvent audit = generateAuditEvent(prefix + "Audit-" + j);
-				events.add(audit);
-				if(events.size() == 250) {
-					saveBatch(connection, events);
-					events.clear();
-				}
-			}
-			offset += recordsPerSecond;
-			try {
-				TimeUnit.MILLISECONDS.sleep(elapsedTime + 1000l - Calendar.getInstance().getTimeInMillis());
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if (i % 30 == 0) {
-				LOG.info("Records saved: " + (i * recordsPerSecond));
-			}
-		}
+        long startTime = Calendar.getInstance().getTimeInMillis();
+        long elapsedTime = startTime;
+        int offset = new Random().nextInt(100000000);
+        int recordsPerSecond = 2000;
 
-	}
+        for (int i = 1; i <= 20000; i++) {
+            elapsedTime = Calendar.getInstance().getTimeInMillis();
+            List<AuditEvent> events = new ArrayList<>();
+            for (int j = offset; j < (offset + recordsPerSecond); j++) {
+                String prefix = "a";
+                switch (i % 4) {
+                case 1:
+                    prefix = "b";
+                    break;
+                case 2:
+                    prefix = "c";
+                    break;
+                case 3:
+                    prefix = "d";
+                    break;
+                default:
+                    prefix = "a";
+                }
+                AuditEvent audit = generateAuditEvent(prefix + "Audit-" + j);
+                events.add(audit);
+                if (events.size() == 250) {
+                    saveBatch(connection, events);
+                    events.clear();
+                }
+            }
+            offset += recordsPerSecond;
+            try {
+                TimeUnit.MILLISECONDS.sleep(elapsedTime + 1000l - Calendar.getInstance().getTimeInMillis());
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            if (i % 30 == 0) {
+                LOG.info("Records saved: " + (i * recordsPerSecond));
+            }
+        }
 
-	private AuditEvent generateAuditEvent(String nextId) {
-		AuditEvent audit = new AuditEvent();
-		audit.getIdElement().setId(nextId);
-		AuditEventAgentComponent agent = new AuditEventAgentComponent();
-		agent.setName("Agent " + new Random().nextInt(100000));
-		audit.addAgent(agent);
-		audit.getMeta().setLastUpdated(Calendar.getInstance().getTime());
-		Calendar date = Calendar.getInstance();
-		date.add(Calendar.DATE, -1);
-		audit.getPeriod().setStart(date.getTime());
-		audit.getPeriod().setEnd(date.getTime());
-		CodeableConcept purpose = new CodeableConcept();
-		purpose.setText("Random text " + new Random().nextInt());
-		audit.getPurposeOfEvent().add(purpose);
-		return audit;
-	}
+    }
 
-	@Override
-	protected void saveToDatabase(IDomainResource resource) {
-		try {
-			Connection connection = getConnection();
-			createTable(connection.getAdmin());
-			saveData(connection, (AuditEvent) resource);
-		} catch (MasterNotRunningException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ZooKeeperConnectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+    private AuditEvent generateAuditEvent(String nextId) {
+        AuditEvent audit = new AuditEvent();
+        audit.getIdElement().setId(nextId);
+        AuditEventAgentComponent agent = new AuditEventAgentComponent();
+        agent.setName("Agent " + new Random().nextInt(100000));
+        audit.addAgent(agent);
+        audit.getMeta().setLastUpdated(Calendar.getInstance().getTime());
+        Calendar date = Calendar.getInstance();
+        date.add(Calendar.DATE, -1);
+        audit.getPeriod().setStart(date.getTime());
+        audit.getPeriod().setEnd(date.getTime());
+        CodeableConcept purpose = new CodeableConcept();
+        purpose.setText("Random text " + new Random().nextInt());
+        audit.getPurposeOfEvent().add(purpose);
+        return audit;
+    }
 
-	private void saveData(Connection connection, AuditEvent resource) throws IOException {
-		Table table = connection.getTable(TABLE_NAME);
+    public List<AuditEvent> getByTypeAndDate(@ResourceParam String type, @ResourceParam Date date) {
+        List<AuditEvent> auditList = new ArrayList<AuditEvent>();
+
+        Filter f = new DependentColumnFilter(CF1, Q_TYPE, true, CompareOperator.EQUAL, new RegexStringComparator("^" + type + "$"));
+        FilterList filterList = new FilterList(f);
+        ResultScanner results = getResults(filterList);
+        if (results != null) {
+            LOG.info(results.toString());
+            Result result;
+            try {
+                result = results.next();
+                
+                while (result != null) {
+                    LOG.info("rowkey=" + Bytes.toString(result.getRow()) + ". Size? " + result.size());
+                   
+                    String data = Bytes.toString(result.getValue(CF2, Q_BODY));
+                    if (data != null) {
+                        LOG.info("Data returned: " + data);
+                        AuditEvent event = (AuditEvent) parseResourceFromJsonString(data);
+                        auditList.add(event);
+                    }
+                    result = results.next();
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            results.close();
+
+        }
+        return auditList;
+    }
+
+    public List<AuditEvent> getByUser(@ResourceParam String userName) {
+        List<AuditEvent> auditList = new ArrayList<AuditEvent>();
+
+        Filter f = new DependentColumnFilter(CF1, Q_NAME, true, CompareOperator.EQUAL, new RegexStringComparator("^" + userName));
+        FilterList filterList = new FilterList(f);
+        ResultScanner results = getResults(filterList);
+        if (results != null) {
+            LOG.info(results.toString());
+            Result result;
+            try {
+                result = results.next();
+                
+                while (result != null) {
+                    LOG.info("rowkey=" + Bytes.toString(result.getRow()) + ". Size? " + result.size());
+                   
+                    String data = Bytes.toString(result.getValue(CF2, Q_BODY));
+                    if (data != null) {
+                        LOG.info("Data returned: " + data);
+                        AuditEvent event = (AuditEvent) parseResourceFromJsonString(data);
+                        auditList.add(event);
+                    }
+                    result = results.next();
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            results.close();
+
+        }
+        return auditList;
+    }
+
+    protected ResultScanner getResults(FilterList filterList) {
+        Table table;
+        try {
+            table = getConnection().getTable(TABLE_NAME);
+            Scan scan = new Scan().setFilter(filterList);
+
+            return table.getScanner(scan);
+        } catch (MasterNotRunningException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ZooKeeperConnectionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+
+    @Override
+    protected void saveToDatabase(IDomainResource resource) {
+        try {
+            Connection connection = getConnection();
+            createTable(connection.getAdmin());
+            saveData(connection, (AuditEvent) resource);
+        } catch (MasterNotRunningException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ZooKeeperConnectionException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private void saveData(Connection connection, AuditEvent resource) throws IOException {
+        Table table = connection.getTable(TABLE_NAME);
 //        LOG.info("Save data. ID: " + resource.getIdElement().getId());
-		Put row = processToPut(resource);
-		table.put(row);
+        Put row = processToPut(resource);
+        table.put(row);
 //        LOG.info("Save successful. Id: " + Bytes.toString(row.getRow()));
-		table.close();
-	}
+        table.close();
+    }
 
-	private Put processToPut(AuditEvent resource) {
-		Put row = new Put(Bytes.toBytes(resource.getIdElement().getId()));
+    private Put processToPut(AuditEvent resource) {
+        Put row = new Put(Bytes.toBytes(resource.getIdElement().getId()));
 
-		addAgent(resource, row);
-		addUpdateDate(resource, row);
-		addPeriod(resource, row);
-		addSource(resource, row);
-		addPurposeOfEvent(resource, row);
-		row.addColumn(CF2, Q_BODY, Bytes.toBytes(parseResourceToJsonString(resource)));
-		return row;
-	}
+        addAgent(resource, row);
+        addUpdateDate(resource, row);
+        addPeriod(resource, row);
+        addSource(resource, row);
+        addPurposeOfEvent(resource, row);
+        row.addColumn(CF2, Q_BODY, Bytes.toBytes(parseResourceToJsonString(resource)));
+        return row;
+    }
 
-	private void addAgent(AuditEvent resource, Put row) {
-		if (resource.getAgent() != null) {
-			for (AuditEventAgentComponent agent : resource.getAgent()) {
-				// Store the first name found
-				if (StringUtils.isNotBlank(agent.getName())) {
-					row.addColumn(CF1, Q_NAME, Bytes.toBytes(agent.getName()));
+    private void addAgent(AuditEvent resource, Put row) {
+        if (resource.getAgent() != null) {
+            for (AuditEventAgentComponent agent : resource.getAgent()) {
+                // Store the first name found
+                if (StringUtils.isNotBlank(agent.getName())) {
+                    row.addColumn(CF1, Q_NAME, Bytes.toBytes(agent.getName()));
 //                    LOG.info("Agent added: " + agent.getName());
-					break;
-				}
-			}
-		}
+                    break;
+                }
+            }
+        }
 
-	}
+    }
 
-	private void addUpdateDate(AuditEvent resource, Put row) {
-		if (resource.getMeta() != null && resource.getMeta().getLastUpdated() != null) {
-			row.addColumn(CF1, Q_UPDATE, Bytes.toBytes(resource.getMeta().getLastUpdated().getTime()));
+    private void addUpdateDate(AuditEvent resource, Put row) {
+        if (resource.getMeta() != null && resource.getMeta().getLastUpdated() != null) {
+            row.addColumn(CF1, Q_UPDATE, Bytes.toBytes(resource.getMeta().getLastUpdated().getTime()));
 //           LOG.info("Update date added: " + resource.getMeta().getLastUpdated().toString());
-		}
-	}
+        }
+    }
 
-	private void addPeriod(AuditEvent resource, Put row) {
-		if (resource.getPeriod() != null) {
-			if (resource.getPeriod().getStart() != null) {
-				row.addColumn(CF1, Q_PSTART, Bytes.toBytes(resource.getPeriod().getStart().getTime()));
+    private void addPeriod(AuditEvent resource, Put row) {
+        if (resource.getPeriod() != null) {
+            if (resource.getPeriod().getStart() != null) {
+                row.addColumn(CF1, Q_PSTART, Bytes.toBytes(resource.getPeriod().getStart().getTime()));
 //               LOG.info("Pending start added: " + resource.getPeriod().getStart().toString());
 
-			}
-			if (resource.getPeriod().getEnd() != null) {
-				row.addColumn(CF1, Q_PEND, Bytes.toBytes(resource.getPeriod().getEnd().getTime()));
+            }
+            if (resource.getPeriod().getEnd() != null) {
+                row.addColumn(CF1, Q_PEND, Bytes.toBytes(resource.getPeriod().getEnd().getTime()));
 //               LOG.info("Pending end added: " + resource.getPeriod().getEnd().toString());
-			}
-		}
-	}
+            }
+        }
+    }
 
-	private void addSource(AuditEvent resource, Put row) {
-		if (resource.getSource() != null) {
-			StringBuilder sb = new StringBuilder();
-			// TODO is this correct?
-			for (Coding type : resource.getSource().getType()) {
-				sb.append(type.getCode());
-				sb.append(',');
-			}
-			if (sb.length() > 0) {
-				row.addColumn(CF1, Q_TYPE, Bytes.toBytes(sb.substring(0, sb.length() - 1)));
-//               LOG.info("Source added: " + sb.substring(0, sb.length() -1));
-			}
+    private void addSource(AuditEvent resource, Put row) {
+        if (resource.getEntity() != null) {
+            StringBuilder sb = new StringBuilder();
+            for(AuditEventEntityComponent entity: resource.getEntity()) {
+                if(entity.getType() != null && entity.getType().getCode() != null) {
+                sb.append(entity.getType().getCode());
+                sb.append(',');
+                }
+            }
+            if (sb.length() > 0) {
+                row.addColumn(CF1, Q_TYPE, Bytes.toBytes(sb.substring(0, sb.length() - 1)));
+               LOG.info("Entity type added: " + sb.substring(0, sb.length() -1));
+            }
 
-		}
-	}
+        }
+    }
 
-	private void addPurposeOfEvent(AuditEvent resource, Put row) {
-		if (resource.getPurposeOfEvent() != null) {
-			StringBuilder sb = new StringBuilder();
-			for (CodeableConcept purpose : resource.getPurposeOfEvent()) {
-				sb.append(purpose.getTextElement());
-				sb.append(',');
-			}
-			if (sb.length() > 0) {
-				row.addColumn(CF1, Q_PURPOSE, Bytes.toBytes(sb.substring(0, sb.length() - 1)));
+    private void addPurposeOfEvent(AuditEvent resource, Put row) {
+        if (resource.getPurposeOfEvent() != null) {
+            StringBuilder sb = new StringBuilder();
+            for (CodeableConcept purpose : resource.getPurposeOfEvent()) {
+                sb.append(purpose.getTextElement());
+                sb.append(',');
+            }
+            if (sb.length() > 0) {
+                row.addColumn(CF1, Q_PURPOSE, Bytes.toBytes(sb.substring(0, sb.length() - 1)));
 //                LOG.info("Purpose added: " + sb.substring(0, sb.length() -1));
-			}
-		}
-	}
+            }
+        }
+    }
 
-	private void createTable(Admin admin) throws IOException {
-		if (!admin.tableExists(TABLE_NAME)) {
-			TableDescriptorBuilder builder = TableDescriptorBuilder.newBuilder(TABLE_NAME);
-			Collection<ColumnFamilyDescriptor> families = new ArrayList<ColumnFamilyDescriptor>();
-			families.add(ColumnFamilyDescriptorBuilder.of(CF1));
-			families.add(ColumnFamilyDescriptorBuilder.of(CF2));
-			builder.setColumnFamilies(families);
-			TableDescriptor desc = builder.build();
-			admin.createTable(desc);
-		}
-	}
+    private void createTable(Admin admin) throws IOException {
+        if (!admin.tableExists(TABLE_NAME)) {
+            TableDescriptorBuilder builder = TableDescriptorBuilder.newBuilder(TABLE_NAME);
+            Collection<ColumnFamilyDescriptor> families = new ArrayList<ColumnFamilyDescriptor>();
+            families.add(ColumnFamilyDescriptorBuilder.of(CF1));
+            families.add(ColumnFamilyDescriptorBuilder.of(CF2));
+            builder.setColumnFamilies(families);
+            TableDescriptor desc = builder.build();
+            admin.createTable(desc);
+        }
+    }
 
 }
