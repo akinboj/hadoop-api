@@ -11,10 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.CompareOperator;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -30,7 +28,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import org.apache.hadoop.hbase.filter.ColumnValueFilter;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.DependentColumnFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
@@ -42,7 +40,7 @@ import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentComponent;
 import org.hl7.fhir.r4.model.AuditEvent.AuditEventEntityComponent;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.IdType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,14 +98,9 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         if ("startAsync".equals(theId.getIdPart())) {
             startBulkAsync();
         }
-        //Test out scan methods - maybe I should extract this to a function
-//        List<AuditEvent> results = getByUser("Grag");
-//        LOG.info("Results expected - 0. Results returned - " + results.size());
-//        results = getByUser("Grah");
-//        LOG.info("Results expected - 1. Results returned - " + results.size());
-//        results = getByUser("Grai");
-//        LOG.info("Results expected - 0. Results returned - " + results.size());
-//
+
+//        scan();
+
         try {
             Connection connection = getConnection();
             Table table = connection.getTable(TABLE_NAME);
@@ -195,6 +188,32 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         table.put(rows);
 //        LOG.info("Save successful. Id: " + Bytes.toString(row.getRow()));
         table.close();
+    }
+
+    protected void scan() {
+        // Test out scan methods - maybe I should extract this to a function
+
+        DateTimeType dtt = new DateTimeType("2021-08-30T02:24:48+00:00");
+        LOG.info("DTT: " + dtt.toString());
+        List<AuditEvent> results = getByTypeAndDate("MLLP-MSG", dtt.getValue());
+        LOG.info("TOO EARLY. Results expected - 0. Results returned - " + results.size());
+        dtt = new DateTimeType("2021-08-30T02:24:49+00:00");
+        LOG.info("DTT: " + dtt.toString());
+        results = getByTypeAndDate("MLLP-MSG", dtt.getValue());
+        LOG.info("ALL FIELDS MATCH. Results expected - 1. Results returned - " + results.size());
+        dtt = new DateTimeType("2021-08-30T02:24:50+00:00");
+        LOG.info("DTT: " + dtt.toString());
+        results = getByTypeAndDate("MLLP-MSG", dtt.getValue());
+        LOG.info("TOO LATE. Results expected - 0. Results returned - " + results.size());
+        
+        dtt = new DateTimeType("2021-08-30T02:24:49+00:00");
+        LOG.info("DTT: " + dtt.toString());
+        results = getByTypeAndDate("MLLP-MSF", dtt.getValue());
+        LOG.info("CODE WRONG. Results expected - 0. Results returned - " + results.size());
+//      results = getByUser("Grah");
+//      LOG.info("Results expected - 1. Results returned - " + results.size());
+//      results = getByUser("Grai");
+//      LOG.info("Results expected - 0. Results returned - " + results.size());
     }
 
     public void startBulk() throws IOException {
@@ -330,18 +349,22 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
     public List<AuditEvent> getByTypeAndDate(@ResourceParam String type, @ResourceParam Date date) {
         List<AuditEvent> auditList = new ArrayList<AuditEvent>();
 
-        Filter f = new DependentColumnFilter(CF1, Q_TYPE, true, CompareOperator.EQUAL, new RegexStringComparator("^" + type + "$"));
-        FilterList filterList = new FilterList(f);
+        LOG.info("Date as binary: " + Bytes.toBytes(date.getTime()));
+        Filter typeFilter = new DependentColumnFilter(CF1, Q_TYPE, true, CompareOperator.EQUAL, new RegexStringComparator("^" + type + "$"));
+        Filter startFilter = new DependentColumnFilter(CF1, Q_PSTART, true, CompareOperator.GREATER_OR_EQUAL,
+                new BinaryComparator(Bytes.toBytes(date.getTime())));
+        Filter endFilter = new DependentColumnFilter(CF1, Q_PEND, true, CompareOperator.LESS_OR_EQUAL, new BinaryComparator(Bytes.toBytes(date.getTime())));
+
+        FilterList filterList = new FilterList(typeFilter, startFilter, endFilter);
         ResultScanner results = getResults(filterList);
         if (results != null) {
-            LOG.info(results.toString());
             Result result;
             try {
                 result = results.next();
-                
+
                 while (result != null) {
                     LOG.info("rowkey=" + Bytes.toString(result.getRow()) + ". Size? " + result.size());
-                   
+
                     String data = Bytes.toString(result.getValue(CF2, Q_BODY));
                     if (data != null) {
                         LOG.info("Data returned: " + data);
@@ -372,10 +395,10 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
             Result result;
             try {
                 result = results.next();
-                
+
                 while (result != null) {
                     LOG.info("rowkey=" + Bytes.toString(result.getRow()) + ". Size? " + result.size());
-                   
+
                     String data = Bytes.toString(result.getValue(CF2, Q_BODY));
                     if (data != null) {
                         LOG.info("Data returned: " + data);
@@ -480,12 +503,12 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
         if (resource.getPeriod() != null) {
             if (resource.getPeriod().getStart() != null) {
                 row.addColumn(CF1, Q_PSTART, Bytes.toBytes(resource.getPeriod().getStart().getTime()));
-//               LOG.info("Pending start added: " + resource.getPeriod().getStart().toString());
+                LOG.info("Pending start added: " + resource.getPeriod().getStart().toString());
 
             }
             if (resource.getPeriod().getEnd() != null) {
                 row.addColumn(CF1, Q_PEND, Bytes.toBytes(resource.getPeriod().getEnd().getTime()));
-//               LOG.info("Pending end added: " + resource.getPeriod().getEnd().toString());
+                LOG.info("Pending end added: " + resource.getPeriod().getEnd().toString());
             }
         }
     }
@@ -493,15 +516,15 @@ public class AuditEventResourceProvider extends BaseResourceProvider implements 
     private void addSource(AuditEvent resource, Put row) {
         if (resource.getEntity() != null) {
             StringBuilder sb = new StringBuilder();
-            for(AuditEventEntityComponent entity: resource.getEntity()) {
-                if(entity.getType() != null && entity.getType().getCode() != null) {
-                sb.append(entity.getType().getCode());
-                sb.append(',');
+            for (AuditEventEntityComponent entity : resource.getEntity()) {
+                if (entity.getType() != null && entity.getType().getCode() != null) {
+                    sb.append(entity.getType().getCode());
+                    sb.append(',');
                 }
             }
             if (sb.length() > 0) {
                 row.addColumn(CF1, Q_TYPE, Bytes.toBytes(sb.substring(0, sb.length() - 1)));
-               LOG.info("Entity type added: " + sb.substring(0, sb.length() -1));
+                LOG.info("Entity type added: " + sb.substring(0, sb.length() - 1));
             }
 
         }
