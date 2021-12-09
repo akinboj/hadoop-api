@@ -106,6 +106,8 @@ spec:
           value: {{ .Values.keyTabPath }}
         - name: KDC_SERVER
           value: {{ .Values.kdcServer }}
+        - name: KRB_CONF
+          value: {{ .Values.kerberosConfigFileLocation }}
         # Set the minimum memory that will be available on the node to assign to the container to be the jvmMaxHeapSizeMB plus 128 MB 
         # for the native heap and operation system processes associated with running Java
         # See https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/#motivation-for-memory-requests-and-limits
