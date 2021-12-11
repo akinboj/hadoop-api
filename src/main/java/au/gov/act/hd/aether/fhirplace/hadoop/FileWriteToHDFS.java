@@ -25,6 +25,7 @@ public class FileWriteToHDFS {
   public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException {
 		  // set kerberos host and realm
 		  String realm = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
+		  String fqdn = "pegacorn-fhirplace-namenode.site-a.svc.cluster.local";
 	      String kdcServer = (System.getenv("KDC_SERVER"));
 	      String namenodeIP = (System.getenv("NAMENODE_IP"));
 	      String loginUser = (System.getenv("LOGIN_USER"));
@@ -44,10 +45,10 @@ public class FileWriteToHDFS {
 	      
 	      // server principal
 	      // the kerberos principle that the namenode is using
-	      conf.set("dfs.namenode.kerberos.principal", "nn/pegacorn-fhirplace-namenode-0.pegacorn-fhirplace-namenode.site-a.svc.cluster.local@"+realm);
+	      conf.set("dfs.namenode.kerberos.principal", "nn/pegacorn-fhirplace-namenode-0."+fqdn+"@"+realm);
 	
 	      UserGroupInformation.setConfiguration(conf);
-	      LOG.info("Security enabled " + UserGroupInformation.isSecurityEnabled());
+	      LOG.info("Security enabled:=:=> " + UserGroupInformation.isSecurityEnabled());
 	      UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath);
 	      
 	      FileSystem fileSystem = FileSystem.get(conf);

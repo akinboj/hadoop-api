@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # NOTE: this file should have Unix (LF) EOL conversion performed on it to avoid: "env: can't execute 'bash ': No such file or directory"
 
-REALM=PEGACORN-FHIRPLACE-NAMENODE.SITE-A
-
 echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with params $@"
 
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
@@ -12,7 +10,7 @@ echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 sed -i "s/kdcserver/${KDC_SERVER}:88/g" /etc/krb5.conf
 sed -i "s/kdcadmin/${KDC_SERVER}:749/g" /etc/krb5.conf
 
-kinit fhirplace/${MY_HOST_IP}@$REALM -kt ${KEYTAB_DIR}/fhirplace.hdfs.keytab -V &
+kinit jboss@${REALM} -kt ${KEYTAB_DIR}/hbase-krb5.keytab -V &
 wait -n
 echo "Kerberos authentication successful."
 

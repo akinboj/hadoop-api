@@ -205,9 +205,16 @@
 		    <scope>provided</scope>
 		</dependency>
 		<dependency>
-        <groupId>org.apache.camel</groupId>
-        <artifactId>camel-jackson</artifactId>
- 	    <version>3.8.0</version>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-jackson</artifactId>
+ 	        <version>3.8.0</version>
+        </dependency>      
+        <!-- https://camel.apache.org/components/3.11.x/hdfs-component.html -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-hdfs</artifactId>
+            <version>3.8.0</version>
+            <!-- use the same version as your Camel core version -->
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.json/json -->
 		<dependency>
