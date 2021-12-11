@@ -6,10 +6,6 @@ echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with pa
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
 echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 
-# kerberos client
-sed -i "s/kdcserver/${KDC_SERVER}:88/g" /etc/krb5.conf
-sed -i "s/kdcadmin/${KDC_SERVER}:749/g" /etc/krb5.conf
-
 kinit jboss@${REALM} -kt ${KEYTAB_DIR}/hbase-krb5.keytab -V &
 wait -n
 echo "Kerberos authentication successful."
@@ -29,7 +25,7 @@ ls -la /etc/ssl/certs/
 
 mkdir -p /var/lib/pegacorn-keystores
 cp /var/lib/pegacorn-ssl-certs/${EXTERNAL_DNS_ENTRY:-$KUBERNETES_SERVICE_NAME.$MY_POD_NAMESPACE}.jks /var/lib/pegacorn-keystores/keystore.jks
-cp /var/lib/pegacorn-ssl-certs/${EXTERNAL_DNS_ENTRY:-$KUBERNETES_SERVICE_NAME.$MY_POD_NAMESPACE}-truststore.jks /var/lib/pegacorn-keystores/truststore.jks
+cp /var/lib/pegacorn-ssl-certs/truststore.jks /var/lib/pegacorn-keystores/truststore.jks
 
 chmod 400 /var/lib/pegacorn-keystores/keystore.jks
 chown jboss:jboss /var/lib/pegacorn-keystores/keystore.jks 
