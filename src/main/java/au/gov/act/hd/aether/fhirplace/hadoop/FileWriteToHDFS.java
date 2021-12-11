@@ -36,10 +36,12 @@ public class FileWriteToHDFS {
 	
 	      Configuration conf = new Configuration();
 	      conf.set("hadoop.security.authentication", "kerberos");
-	      conf.set("hadoop.security.authorization", "false");
+	      conf.set("hadoop.security.authorization", "true");
 	      
 	      conf.set("fs.defaultFS", "hdfs://"+namenodeIP+":9820");
 	      conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
+	      
+	      conf.set("dfs.client.use.datanode.hostname", "true");
 	      
 	      // server principal
 	      // the kerberos principle that the namenode is using
@@ -48,9 +50,7 @@ public class FileWriteToHDFS {
 	      UserGroupInformation.setConfiguration(conf);
 	      LOG.info("Security enabled:=:=> " + UserGroupInformation.isSecurityEnabled());
 	      UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath+"/hbase-krb5.keytab");
-	      // Check user logon status
 	      LOG.info("Logged in user:=:=> " + UserGroupInformation.getLoginUser());
-	      LOG.info("Current user:=:=> " + UserGroupInformation.getCurrentUser());
 	      
 	      FileSystem fileSystem = FileSystem.get(conf);
 	      // Create a path
