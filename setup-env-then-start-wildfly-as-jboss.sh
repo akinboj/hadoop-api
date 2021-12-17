@@ -6,7 +6,7 @@ echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with pa
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
 echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 
-kinit jboss@${REALM} -kt ${KEYTAB_DIR}/hbase-krb5.keytab -V &
+KRB5_TRACE=/dev/stderr kinit jboss@${REALM} -kt ${KEYTAB_DIR}/hbase-krb5.keytab -V &
 wait -n
 echo "Kerberos authentication successful."
 

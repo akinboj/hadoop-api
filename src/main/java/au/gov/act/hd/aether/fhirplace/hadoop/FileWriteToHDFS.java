@@ -32,16 +32,17 @@ public class FileWriteToHDFS {
 	      String keyTabPath = (System.getenv("KEYTAB_PATH"));
 	      
 	      System.setProperty("java.security.krb5.realm", realm);
-	      System.setProperty("java.security.krb5.kdc", kdcServer+":88");
+	      System.setProperty("java.security.krb5.kdc", kdcServer);
+		  System.setProperty("sun.security.krb5.debug", "true");
+		  System.setProperty("security.auth.useSubjectCredsOnly", "false");
 	
 	      Configuration conf = new Configuration();
 	      conf.set("hadoop.security.authentication", "kerberos");
-	      conf.set("hadoop.security.authorization", "true");
+	      conf.set("hadoop.rpc.protection", "authentication,integrity,privacy");
+	      conf.set("dfs.data.transfer.protection", "authentication,integrity,privacy");
 	      
 	      conf.set("fs.defaultFS", "hdfs://"+namenodeIP+":9820");
 	      conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
-	      
-	      conf.set("dfs.client.use.datanode.hostname", "true");
 	      
 	      // server principal
 	      // the kerberos principle that the namenode is using
