@@ -197,6 +197,12 @@
 		    <artifactId>hadoop-common</artifactId>
 		    <version>3.3.0</version>
 		</dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-hdfs -->
+		<dependency>
+		    <groupId>org.apache.hadoop</groupId>
+		    <artifactId>hadoop-hdfs</artifactId>
+		    <version>3.3.0</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-mapreduce-client-jobclient -->
 		<dependency>
 		    <groupId>org.apache.hadoop</groupId>

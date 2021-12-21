@@ -12,50 +12,35 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.ietf.jgss.GSSException;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FileWriteToHDFS {
-	private static final Logger LOG = LoggerFactory.getLogger(FileWriteToHDFS.class);
-
-  public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException {
-		  // set kerberos host and realm
-		  String realm = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
-		  String fqdn = "pegacorn-fhirplace-namenode.site-a.svc.cluster.local";
-	      String kdcServer = (System.getenv("KDC_SERVER"));
+	public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException {
 	      String namenodeIP = (System.getenv("NAMENODE_IP"));
+	      String realm = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
 	      String loginUser = (System.getenv("LOGIN_USER"));
 	      String keyTabPath = (System.getenv("KEYTAB_PATH"));
+	      String fqdn = "pegacorn-fhirplace-namenode.site-a.svc.cluster.local";
 	      
-	      System.setProperty("java.security.krb5.realm", realm);
-	      System.setProperty("java.security.krb5.kdc", kdcServer);
-		  System.setProperty("sun.security.krb5.debug", "true");
-		  System.setProperty("security.auth.useSubjectCredsOnly", "false");
-	
+	      System.setProperty("sun.security.krb5.debug", "true");
+	      System.setProperty("javax.security.auth.useSubjectCredsOnly", "true");
+	      System.setProperty("java.security.krb5.conf", "/etc/krb5.conf");
+	      System.setProperty("java.security.auth.login.config", "/etc/jaas.conf");
+
 	      Configuration conf = new Configuration();
-	      conf.set("hadoop.security.authentication", "kerberos");
-	      conf.set("hadoop.rpc.protection", "authentication,integrity,privacy");
-	      conf.set("dfs.data.transfer.protection", "authentication,integrity,privacy");
-	      
-	      conf.set("fs.defaultFS", "hdfs://"+namenodeIP+":9820");
-	      conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
-	      
-	      // server principal
-	      // the kerberos principle that the namenode is using
+	      conf.set("hadoop.security.authentication", "kerberos");      
+	      conf.set("fs.defaultFS", "hdfs://"+namenodeIP+":8020");
+	      conf.set("hadoop.rpc.protection", "privacy");
 	      conf.set("dfs.namenode.kerberos.principal", "nn/pegacorn-fhirplace-namenode-0."+fqdn+"@"+realm);
-	
+	      
 	      UserGroupInformation.setConfiguration(conf);
-	      LOG.info("Security enabled:=:=> " + UserGroupInformation.isSecurityEnabled());
 	      UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath+"/hbase-krb5.keytab");
-	      LOG.info("Logged in user:=:=> " + UserGroupInformation.getLoginUser());
 	      
 	      FileSystem fileSystem = FileSystem.get(conf);
 	      // Create a path
-	      String fileName = "mock-data.json";
+	      String fileName = "logs.json";
 	      Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
 	      FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
 	      // Set replication
