@@ -40,7 +40,7 @@ public class FileWriteToHDFS {
 	      
 	      FileSystem fileSystem = FileSystem.get(conf);
 	      // Create a path
-	      String fileName = "logs.json";
+	      String fileName = "mock-data.json";
 	      Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
 	      FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
 	      // Set replication
