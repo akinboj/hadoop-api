@@ -6,10 +6,6 @@ echo "Staring setup-env-then-start-wildfly-as-jboss.sh as user $(whoami) with pa
 echo "DOCKER IMAGE_BUILD_TIMESTAMP=${IMAGE_BUILD_TIMESTAMP}"
 echo "HELM_RELEASE_TIME=${HELM_RELEASE_TIME}"
 
-KRB5_TRACE=/dev/stderr kinit jboss@${REALM} -kt ${KEYTAB_DIR}/hbase-krb5.keytab -V &
-wait -n
-echo "Kerberos authentication successful."
-
 # Copy the certificate files based on
 # 1. https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
 # 2. https://itnext.io/postgresql-docker-image-with-ssl-certificate-signed-by-a-custom-certificate-authority-ca-3df41b5b53

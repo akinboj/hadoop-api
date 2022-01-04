@@ -25,9 +25,6 @@ fi
 
 #From https://stackoverflow.com/a/54775864
 wildfly_runner+=( -Djboss.tx.node.id="${MY_POD_NAME/$KUBERNETES_SERVICE_NAME/}" )
-wildfly_runner+=( -Djava.security.auth.login.config=/etc/jaas.conf )
-wildfly_runner+=( -Djava.security.krb5.conf=/etc/krb5.conf )
-wildfly_runner+=( -Djavax.security.auth.useSubjectCredsOnly=true )
 
 if [ -n "$JAVAX_NET_DEBUG" ] && [ "$JAVAX_NET_DEBUG" != 'none' ]; then
     wildfly_runner+=( -Djavax.net.debug=$JAVAX_NET_DEBUG )
