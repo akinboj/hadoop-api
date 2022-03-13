@@ -26,10 +26,8 @@ public class FileWriteToHDFS {
 	      String loginUser = (System.getenv("LOGIN_USER"));
 	      String keyTabPath = (System.getenv("KEYTAB_PATH"));
 	      String kdcServer = (System.getenv("KDC_SERVER"));
-	      String namenodeIP = (System.getenv("NAMENODE_IP"));
+	      String namenodeHost = (System.getenv("NAMENODE_HOST"));
 	      String kerberosConfigFileLocation = "/etc/krb5.conf";
-	      String nameService = "pegacorn-fhirplace-namenode-0.pegacorn-fhirplace-namenode.site-a.svc.cluster.local";
-	      
 	      System.setProperty("sun.security.krb5.debug", "true");
 	      System.setProperty("java.security.krb5.realm", realm);
 	      System.setProperty("java.security.krb5.kdc", kdcServer);
@@ -40,10 +38,10 @@ public class FileWriteToHDFS {
 	      conf.set("hadoop.security.authorization", "true");
 	      conf.set("hadoop.rpc.protection", "privacy");
 	      conf.set("dfs.data.transfer.protection", "privacy");
-	      conf.set("fs.defaultFS", "hdfs://"+namenodeIP+":8020");
+	      conf.set("fs.defaultFS", "hdfs://"+namenodeHost+":8020");
 	      conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
 	      conf.set("dfs.client.use.datanode.hostname", "true");
-	      conf.set("dfs.namenode.kerberos.principal", "nn/"+nameService+"@"+realm);
+	      conf.set("dfs.namenode.kerberos.principal", "nn/"+namenodeHost+"@"+realm);
 	      
 	      UserGroupInformation.setConfiguration(conf);
 	      UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath+"/hbase-krb5.keytab");
@@ -55,7 +53,7 @@ public class FileWriteToHDFS {
 	      // Create a path
 	      String fileName = "mock.json";
 	      Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
-	      URI uri = new URI("hdfs:"+nameService+":"+hdfsWritePath);
+	      URI uri = new URI("hdfs:"+namenodeHost+":"+hdfsWritePath);
 	      FileSystem fileSystem = FileSystem.get(new URI("hdfs:" + uri.getSchemeSpecificPart()), conf);
 	      FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
 	      // Set replication

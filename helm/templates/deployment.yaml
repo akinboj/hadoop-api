@@ -98,8 +98,8 @@ spec:
               fieldPath: spec.serviceAccountName
         - name: JVM_MAX_HEAP_SIZE
           value: "{{ .Values.jvmMaxHeapSizeMB }}m"
-        - name: NAMENODE_IP
-          value: {{ .Values.namenodeIP }}
+        - name: NAMENODE_HOST
+          value: {{ .Values.namenodeHost }}
         - name: LOGIN_USER
           value: {{ .Values.loginUser }}
         - name: KEYTAB_PATH
