@@ -4,6 +4,8 @@ package au.gov.act.hd.aether.fhirplace.hadoop;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedExceptionAction;
 
@@ -21,22 +23,27 @@ import org.json.JSONObject;
 public class FileWriteToHDFS {
 	public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException {
 	      String realm = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
-	      String loginUser = "jboss";
-	      String keyTabPath = "/etc/ssl/keytab";
+	      String loginUser = (System.getenv("LOGIN_USER"));
+	      String keyTabPath = (System.getenv("KEYTAB_PATH"));
+	      String kdcServer = (System.getenv("KDC_SERVER"));
+	      String namenodeIP = (System.getenv("NAMENODE_IP"));
+	      String kerberosConfigFileLocation = "/etc/krb5.conf";
+	      String nameService = "pegacorn-fhirplace-namenode-0.pegacorn-fhirplace-namenode.site-a.svc.cluster.local";
 	      
 	      System.setProperty("sun.security.krb5.debug", "true");
 	      System.setProperty("java.security.krb5.realm", realm);
-	      System.setProperty("java.security.krb5.kdc", "pvmone.dev.lab");
+	      System.setProperty("java.security.krb5.kdc", kdcServer);
+	      System.setProperty("java.security.krb5.conf", kerberosConfigFileLocation);
 
-	      final Configuration conf = new Configuration();
+	      Configuration conf = new Configuration();
 	      conf.set("hadoop.security.authentication", "kerberos");
 	      conf.set("hadoop.security.authorization", "true");
 	      conf.set("hadoop.rpc.protection", "privacy");
 	      conf.set("dfs.data.transfer.protection", "privacy");
-	      conf.set("fs.defaultFS", "hdfs://pvmtwo.dev.lab:8020");
+	      conf.set("fs.defaultFS", "hdfs://"+namenodeIP+":8020");
 	      conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
 	      conf.set("dfs.client.use.datanode.hostname", "true");
-	      conf.set("dfs.namenode.kerberos.principal", "nn/pvmtwo.dev.lab@"+realm);
+	      conf.set("dfs.namenode.kerberos.principal", "nn/"+nameService+"@"+realm);
 	      
 	      UserGroupInformation.setConfiguration(conf);
 	      UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath+"/hbase-krb5.keytab");
@@ -44,15 +51,16 @@ public class FileWriteToHDFS {
 		  
 	      ugi.doAs(new PrivilegedExceptionAction<Object>() {
 	    	  @Override
-	    	  public Object run() throws IOException, InterruptedException { 
-	      FileSystem fileSystem = FileSystem.get(conf);
+	    	  public Object run() throws IOException, InterruptedException, URISyntaxException { 
 	      // Create a path
 	      String fileName = "mock.json";
 	      Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
+	      URI uri = new URI("hdfs:"+nameService+":"+hdfsWritePath);
+	      FileSystem fileSystem = FileSystem.get(new URI("hdfs:" + uri.getSchemeSpecificPart()), conf);
 	      FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
 	      // Set replication
 	      fileSystem.setReplication(hdfsWritePath, (short) 1);
-
+	      
 	      BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream,StandardCharsets.UTF_8));
 	      bufferedWriter.write(jsonMessage.toString());
 	      bufferedWriter.newLine();

@@ -42,6 +42,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <hadoop.version>3.3.0</hadoop.version>
         
         <version-org.apache.camel>3.8.0</version-org.apache.camel>
 
@@ -132,41 +133,24 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.jboss.spec.javax.servlet</groupId>
-            <artifactId>jboss-servlet-api_4.0_spec</artifactId>
-            <version>2.0.0.Final</version>
-            <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-core</artifactId>
-            <version>3.8.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-cdi</artifactId>
-            <version>3.8.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-endpointdsl</artifactId>
-            <version>3.8.0</version>
+            <version>${version-org.apache.camel}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-jackson</artifactId>
-            <version>3.8.0</version>
+            <version>${version-org.apache.camel}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-servlet</artifactId>
-            <version>3.8.0</version>
+            <version>${version-org.apache.camel}</version>
         </dependency>
- 		<dependency>
+ 		<!-- <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-servlet</artifactId>
-	 	    <version>3.8.0</version>
+	 	    <version>${version-org.apache.camel}</version>
             <scope>runtime</scope>
             <exclusions>
                 <exclusion>
@@ -174,52 +158,53 @@
                     <artifactId>tomcat-embed-logging-juli</artifactId>
                 </exclusion>
             </exclusions>
-           </dependency>
-                   <dependency>
+        </dependency> -->
+        <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-undertow</artifactId>
-	 	    <version>3.8.0</version>
+	 	    <version>${version-org.apache.camel}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-netty-http</artifactId>
-	 	    <version>3.8.0</version>
+	 	    <version>${version-org.apache.camel}</version>
+        </dependency>
+        <!-- Hadoop main client artifact -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-mapreduce-client-core -->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-mapreduce-client-core</artifactId>
-            <version>3.3.0</version>
+            <version>${hadoop.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common -->
 		<dependency>
 		    <groupId>org.apache.hadoop</groupId>
 		    <artifactId>hadoop-common</artifactId>
-		    <version>3.3.0</version>
+		    <version>${hadoop.version}</version>
 		</dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-hdfs -->
 		<dependency>
 		    <groupId>org.apache.hadoop</groupId>
 		    <artifactId>hadoop-hdfs</artifactId>
-		    <version>3.3.0</version>
+		    <version>${hadoop.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-mapreduce-client-jobclient -->
 		<dependency>
 		    <groupId>org.apache.hadoop</groupId>
 		    <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
-		    <version>3.3.0</version>
+		    <version>${hadoop.version}</version>
 		    <scope>provided</scope>
-		</dependency>
-		<dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-jackson</artifactId>
- 	        <version>3.8.0</version>
-        </dependency>      
+		</dependency>      
         <!-- https://camel.apache.org/components/3.11.x/hdfs-component.html -->
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-hdfs</artifactId>
-            <version>3.8.0</version>
+            <version>${version-org.apache.camel}</version>
             <!-- use the same version as your Camel core version -->
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.json/json -->

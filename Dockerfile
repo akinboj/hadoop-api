@@ -1,4 +1,4 @@
-FROM fhirfactory/pegacorn-base-docker-wildfly:1.0.0
+FROM fhirfactory/pegacorn-base-docker-wildfly:1.0.1
 
 USER root
 
@@ -11,6 +11,7 @@ RUN apk add --no-cache lsof \
 # Kerberos config
 RUN mkdir -p etc/ssl/keytab
 COPY krb5.conf /etc/krb5.conf
+COPY jaas.conf /etc/jaas.conf
 ENV KEYTAB_DIR=/etc/ssl/keytab
 
 # Replace the default wildfly welcome content page for the URL /, with a blank html page, so the application server is not easily exposed to callers.
