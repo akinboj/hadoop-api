@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
 import javax.security.auth.login.LoginException;
@@ -19,35 +20,44 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.ietf.jgss.GSSException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class FileWriteToHDFS {
-	public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException {
-	      String realm = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
-	      String loginUser = (System.getenv("LOGIN_USER"));
-	      String keyTabPath = (System.getenv("KEYTAB_PATH"));
-	      String kdcServer = (System.getenv("KDC_SERVER"));
-	      String namenodeHost = (System.getenv("NAMENODE_HOST"));
-	      String kerberosConfigFileLocation = "/etc/krb5.conf";
-	      System.setProperty("sun.security.krb5.debug", "true");
-	      System.setProperty("java.security.krb5.realm", realm);
-	      System.setProperty("java.security.krb5.kdc", kdcServer);
-	      System.setProperty("java.security.krb5.conf", kerberosConfigFileLocation);
-
-	      Configuration conf = new Configuration();
-	      conf.set("hadoop.security.authentication", "kerberos");
-	      conf.set("hadoop.security.authorization", "true");
-	      conf.set("hadoop.rpc.protection", "privacy");
-	      conf.set("dfs.data.transfer.protection", "privacy");
-	      conf.set("fs.defaultFS", "hdfs://"+namenodeHost+":8020");
-	      conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
-	      conf.set("dfs.client.use.datanode.hostname", "true");
-	      conf.set("dfs.namenode.kerberos.principal", "nn/"+namenodeHost+"@"+realm);
-	      
-	      UserGroupInformation.setConfiguration(conf);
-	      UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath+"/hbase-krb5.keytab");
-	      UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
-		  
-	      ugi.doAs(new PrivilegedExceptionAction<Object>() {
+	private static final Logger LOG = LoggerFactory.getLogger(FileWriteToHDFS.class);
+	
+		String realm = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
+	    String loginUser = (System.getenv("LOGIN_USER"));
+	    String keyTabPath = (System.getenv("KEYTAB_PATH"));
+	    String kdcServer = (System.getenv("KDC_SERVER"));
+	    String namenodeHost = (System.getenv("NAMENODE_HOST"));
+	    String kerberosConfigFileLocation = "/etc/krb5.conf";
+	
+	public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException, PrivilegedActionException {
+		
+		// set kerberos host and realm
+        System.setProperty("java.security.krb5.realm", realm);
+		System.setProperty("sun.security.krb5.debug", "true");
+        System.setProperty("java.security.krb5.kdc", kdcServer);
+        System.setProperty("java.security.krb5.conf", kerberosConfigFileLocation);
+		
+		Configuration conf = new Configuration();
+		conf.set("hadoop.security.authentication", "kerberos");
+		conf.set("hadoop.security.authorization", "true");
+		conf.set("hadoop.rpc.protection", "privacy");
+		conf.set("dfs.data.transfer.protection", "privacy");
+		conf.set("fs.defaultFS", "hdfs://"+namenodeHost+":8020");
+		conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
+		conf.set("dfs.client.use.datanode.hostname", "true");
+		conf.set("dfs.namenode.kerberos.principal", "nn/"+namenodeHost+"@"+realm);
+		
+		UserGroupInformation.setConfiguration(conf);
+		UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath+"/hbase-krb5.keytab");
+		UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
+		LOG.info("Kerberos Autheticated user is :==:==> "+UserGroupInformation.getCurrentUser());
+		
+		ugi.doAs(new PrivilegedExceptionAction<Object>() {
 	    	  @Override
 	    	  public Object run() throws IOException, InterruptedException, URISyntaxException { 
 	      // Create a path
@@ -65,8 +75,8 @@ public class FileWriteToHDFS {
 	      bufferedWriter.close();
 	      fileSystem.close();
 	      return bufferedWriter;
-          }
+        }
 	      });
 	      
-          }
-  }
+        }
+}
