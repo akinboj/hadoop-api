@@ -22,21 +22,16 @@ spec:
     port: {{ add 0 .Values.basePort }}
     protocol: TCP
     targetPort: {{ add 0 (.Values.basePortInsidePod | default .Values.basePort) }}
-    nodePort: {{ if (.Values.serviceType) and (eq .Values.serviceType "NodePort")}} {{ add 0 .Values.basePort }} {{ end }}
   {{- if (.Values.wildflyAdminUser) }} 
   - name: admin
     port: {{ add 1 .Values.basePort }}
     protocol: TCP
     targetPort: 9993
-    nodePort: {{ if (.Values.serviceType) and (eq .Values.serviceType "NodePort")}} {{ add 1 .Values.basePort }} {{ end }}
   {{- end }}
-  {{- if (.Values.wildflyEnableDebug) and (eq .Values.wildflyEnableDebug "Yes") }} 
   - name: debug
     port: {{ add 2 .Values.basePort }}
     protocol: TCP
     targetPort: 8787
-    nodePort: {{ if (.Values.serviceType) and (eq .Values.serviceType "NodePort")}} {{ add 2 .Values.basePort }} {{ end }}
-  {{- end }}
   selector:
     app: {{ .Values.serviceName }}
   type: {{ .Values.serviceType | default "LoadBalancer" }}

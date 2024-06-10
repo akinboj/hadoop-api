@@ -28,7 +28,6 @@ wildfly_runner+=( -Djboss.tx.node.id="${MY_POD_NAME/$KUBERNETES_SERVICE_NAME/}" 
 wildfly_runner+=( -Djava.security.krb5.kdc="${KDC_SERVER}" )
 wildfly_runner+=( -Djava.security.krb5.realm="${REALM}" )
 wildfly_runner+=( -Djava.security.krb5.conf=/etc/krb5.conf )
-wildfly_runner+=( -Djavax.security.auth.useSubjectCredsOnly=false )
 wildfly_runner+=( -Djava.security.auth.login.config=/etc/jaas.conf )
 
 
@@ -50,6 +49,15 @@ fi
 if [ -n "$WILDFLY_LOG_LEVEL" ] && [ "$WILDFLY_LOG_LEVEL" != 'INFO' ]; then
     sed -i "s+<level name=\"INFO\"/>+<level name=\"$WILDFLY_LOG_LEVEL\"/>+g" "$JBOSS_HOME/standalone/configuration/standalone.xml"
 fi
+
+echo "==== Authenticating to realm ==============================================================="
+echo "============================================================================================"
+KRB5_TRACE=/dev/stderr kinit -f jboss@PEGACORN-FHIRPLACE-AUDIT.LOCAL -kt ${KEYTAB_PATH}/hbase-krb5.keytab -V &
+wait -n
+echo "Application server TGT completed."
+echo ""
+
+klist
 
 echo " "
 echo "Starting wildfly with the following configuration:"

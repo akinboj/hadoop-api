@@ -1,82 +1,98 @@
-// https://gist.github.com/dbathgate/87986ad5c659084dd0710f471de66e00
 package au.gov.act.hd.aether.fhirplace.hadoop;
-
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-
-import javax.security.auth.login.LoginException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.ietf.jgss.GSSException;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.PrivilegedExceptionAction;
+
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import javax.servlet.ServletException;
 
 public class FileWriteToHDFS {
-	private static final Logger LOG = LoggerFactory.getLogger(FileWriteToHDFS.class);
-	
-		String realm = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
-	    String loginUser = (System.getenv("LOGIN_USER"));
-	    String keyTabPath = (System.getenv("KEYTAB_PATH"));
-	    String kdcServer = (System.getenv("KDC_SERVER"));
-	    String namenodeHost = (System.getenv("NAMENODE_HOST"));
-	    String kerberosConfigFileLocation = "/etc/krb5.conf";
-	
-	public void writeFileToHDFS(JSONObject jsonMessage) throws IOException, GSSException, LoginException, InterruptedException, PrivilegedActionException {
-		
-		// set kerberos host and realm
-        System.setProperty("java.security.krb5.realm", realm);
-		System.setProperty("sun.security.krb5.debug", "true");
-        System.setProperty("java.security.krb5.kdc", kdcServer);
-        System.setProperty("java.security.krb5.conf", kerberosConfigFileLocation);
-		
-		Configuration conf = new Configuration();
-		conf.set("hadoop.security.authentication", "kerberos");
-		conf.set("hadoop.security.authorization", "true");
-		conf.set("hadoop.rpc.protection", "privacy");
-		conf.set("dfs.data.transfer.protection", "privacy");
-		conf.set("fs.defaultFS", "hdfs://"+namenodeHost+":8020");
-		conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
-		conf.set("dfs.client.use.datanode.hostname", "true");
-		conf.set("dfs.namenode.kerberos.principal", "nn/"+namenodeHost+"@"+realm);
-		
-		UserGroupInformation.setConfiguration(conf);
-		UserGroupInformation.loginUserFromKeytab(loginUser+"@"+realm, keyTabPath+"/hbase-krb5.keytab");
-		UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
-		LOG.info("Kerberos Autheticated user is :==:==> "+UserGroupInformation.getCurrentUser());
-		
-		ugi.doAs(new PrivilegedExceptionAction<Object>() {
-	    	  @Override
-	    	  public Object run() throws IOException, InterruptedException, URISyntaxException { 
-	      // Create a path
-	      String fileName = "mock.json";
-	      Path hdfsWritePath = new Path("/data/pegacorn/sample-dataset/" + fileName);
-	      URI uri = new URI("hdfs:"+namenodeHost+":"+hdfsWritePath);
-	      FileSystem fileSystem = FileSystem.get(new URI("hdfs:" + uri.getSchemeSpecificPart()), conf);
-	      FSDataOutputStream fsDataOutputStream = fileSystem.create(hdfsWritePath,true);
-	      // Set replication
-	      fileSystem.setReplication(hdfsWritePath, (short) 1);
-	      
-	      BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream,StandardCharsets.UTF_8));
-	      bufferedWriter.write(jsonMessage.toString());
-	      bufferedWriter.newLine();
-	      bufferedWriter.close();
-	      fileSystem.close();
-	      return bufferedWriter;
+    private static final Logger LOG = LoggerFactory.getLogger(FileWriteToHDFS.class);
+    private static final String KERBEROS_REALM = "PEGACORN-FHIRPLACE-AUDIT.LOCAL";
+    private static final String KERBEROS_KDC = System.getenv("KDC_SERVER");
+    private static final String KERBEROS_CONFIG_FILE = "/etc/krb5.conf";
+    private static final String JAAS_CONFIG_FILE = "/etc/jaas.conf";
+    private static final String NAMENODE_HOST = System.getenv("NAMENODE_HOST");
+    private static final String LOGIN_USER = System.getenv("LOGIN_USER");
+    private static final String KEYTAB_PATH = System.getenv("KEYTAB_PATH") + "/hbase-krb5.keytab";
+    
+    public void init() throws ServletException {
+        // Initialize Kerberos authentication during servlet initialization
+        initializeKerberosAuthentication();
+    }
+    
+    private void initializeKerberosAuthentication() {
+        try {
+            LoginContext lc = new LoginContext("KerberosLogin");
+            lc.login(); // Perform Kerberos authentication
+            // Access the authenticated subject using lc.getSubject()
+        } catch (LoginException e) {
+            // Handle authentication failure
+            e.printStackTrace();
         }
-	      });
-	      
-        }
+    }
+
+    public void writeFileToHDFS(final String json) throws Exception {
+        configureKerberos();
+
+        UserGroupInformation.getCurrentUser().doAs(new PrivilegedExceptionAction<Void>() {
+            public Void run() throws Exception {
+                Configuration conf = new Configuration();
+                conf.set("fs.defaultFS", "hdfs://" + NAMENODE_HOST + ":8020");
+                conf.set("hadoop.security.authentication", "kerberos");
+                FileSystem fs = FileSystem.get(conf);
+                Path filePath = new Path("/data/sample-dataset/mock.json");
+
+                // Ensure the parent directory exists
+                Path parentDir = filePath.getParent();
+                if (!fs.exists(parentDir)) {
+                    fs.mkdirs(parentDir); // Try creating the directory if it doesn't exist
+                }
+
+                // Now create the file
+                try (FSDataOutputStream out = fs.create(filePath, true)) {
+                    out.writeBytes(json);
+                    LOG.info("Successfully written to HDFS: {}", json);
+                } catch (Exception e) {
+                    LOG.error("Failed to write to HDFS", e);
+                    throw e;
+                }
+                return null;
+            }
+        });
+    }
+
+    private void configureKerberos() throws Exception {
+        System.setProperty("java.security.krb5.realm", KERBEROS_REALM);
+        System.setProperty("java.security.krb5.kdc", KERBEROS_KDC);
+        System.setProperty("java.security.krb5.conf", KERBEROS_CONFIG_FILE);
+        System.setProperty("java.security.auth.login.config", JAAS_CONFIG_FILE);
+        System.setProperty("sun.security.krb5.debug", "true");
+        System.setProperty("sun.security.spnego.debug", "true");
+        System.setProperty("java.security.debug", "gssapi:trace,configfile,configparser,logincontext");
+                
+        Configuration hdfsConfig = new Configuration();
+        hdfsConfig.set("hadoop.security.authentication", "kerberos");
+        hdfsConfig.set("hadoop.rpc.protection", "privacy");
+        hdfsConfig.set("hadoop.security.authorization", "false");
+        hdfsConfig.set("dfs.data.transfer.protection", "privacy");
+        hdfsConfig.set("dfs.encrypt.data.transfer", "true");
+        hdfsConfig.set("fs.defaultFS", "hdfs://" + NAMENODE_HOST + ":8020");
+        hdfsConfig.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+        hdfsConfig.set("dfs.client.use.datanode.hostname", "false");
+        hdfsConfig.set("dfs.namenode.kerberos.principal", "nn/" + NAMENODE_HOST + "@" + KERBEROS_REALM);
+
+        UserGroupInformation.setConfiguration(hdfsConfig);
+        UserGroupInformation.loginUserFromKeytab(LOGIN_USER + "@" + KERBEROS_REALM, KEYTAB_PATH);
+
+        LOG.info("Kerberos authentication configured successfully with principal: {}", LOGIN_USER + "@" + KERBEROS_REALM);
+    }
 }
