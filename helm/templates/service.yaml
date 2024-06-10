@@ -21,7 +21,7 @@ spec:
   - name: services
     port: {{ add 0 .Values.basePort }}
     protocol: TCP
-    targetPort: {{ add 0 (.Values.basePortInsidePod | default .Values.basePort) }}
+    targetPort: 8443
   {{- if (.Values.wildflyAdminUser) }} 
   - name: admin
     port: {{ add 1 .Values.basePort }}

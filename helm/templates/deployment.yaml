@@ -1,6 +1,6 @@
 ---
 apiVersion: apps/v1 
-kind: Deployment
+kind: StatefulSet
 metadata:
   annotations:
     fabric8.io/metrics-path: dashboard/file/camel-routes.json/?var-project={{ .Values.serviceName }}&var-version={{ .Values.imageTag }}
@@ -110,15 +110,16 @@ spec:
         image: {{ .Values.dockerRepo }}pegacorn-fhirplace-bigdata-api:{{ .Values.imageTag }}            
         imagePullPolicy: {{ .Values.imagePullPolicy | default "IfNotPresent" }}
         livenessProbe:
-          httpGet:
-            path: /health
-            port: 9993
-            scheme: HTTPS
-          initialDelaySeconds: 30
+          exec:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 15
+          periodSeconds: 5
         name: wildfly
         ports:
-        - containerPort: {{ add 0 (.Values.basePortInsidePod | default .Values.basePort) }}
-          name: https
+        - containerPort: 8443
+          name: services
           protocol: TCP
         {{- if (.Values.wildflyAdminUser) }} 
         - containerPort: 9993
@@ -135,11 +136,12 @@ spec:
           name: jolokia
           protocol: TCP
         readinessProbe:
-          httpGet:
-            path: /health
-            port: 9993
-            scheme: HTTPS
-          initialDelaySeconds: 30
+          exec:
+            command:
+            - cat
+            - /tmp/healthy
+          initialDelaySeconds: 15
+          periodSeconds: 5
         securityContext:
           privileged: false
         volumeMounts:
