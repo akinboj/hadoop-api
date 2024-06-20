@@ -1,30 +1,4 @@
-# Using the ARM64 Debian Buster slim image as the base
-FROM arm64v8/debian:buster-slim
-
-# Install necessary packages for adding a new repository
-RUN apt-get update && apt-get install -y wget gnupg software-properties-common \
-    && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - \
-    && echo "deb https://packages.adoptium.net/artifactory/deb buster main" | tee /etc/apt/sources.list.d/adoptium.list \
-    && apt-get update \
-    && apt-get install -y temurin-17-jdk \
-    && apt-get install -y --no-install-recommends \
-        net-tools \
-        curl \
-        netcat \
-        gnupg \
-        wget \
-        libsnappy-dev \
-        tzdata \
-    && rm -rf /var/lib/apt/lists/* # Clean up unnecessary files to reduce the image size
-
-# Set JAVA_HOME environment variable, helpful for some applications
-ENV JAVA_HOME /usr/lib/jvm/temurin-17-jdk-arm64
-
-# Set PATH environment variable
-ENV PATH $JAVA_HOME/bin:$PATH
-
-# Verify installation
-RUN java -version
+FROM fhirfactory/pegacorn-base-hadoop:1.0.0
 
 # Install Kerberos client
 RUN apt-get update && \
@@ -33,13 +7,6 @@ RUN apt-get update && \
         libpam-krb5 \
         libpam-ccreds \
     && rm -rf /var/lib/apt/lists/*
-    
-# Kerberos config
-RUN mkdir -p etc/ssl/keytab
-ENV KEYTAB_DIR=/etc/ssl/keytab
-
-COPY krb5.conf /etc/krb5.conf
-COPY jaas.conf /etc/jaas.conf
 
 # Install multiple network diagnostic tools
 RUN apt-get update && \
@@ -49,14 +16,36 @@ RUN apt-get update && \
     net-tools \
     traceroute \
     dnsutils \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*  # Clean up to reduce layer size
+
+# Kerberos configuration
+COPY krb5.conf /etc/krb5.conf
+COPY jaas.conf /etc/jaas.conf
+RUN mkdir -p /var/log/kerberos
+RUN mkdir -p /etc/security/keytabs
+
+ENV KEYTAB_DIR=/etc/security/keytabs
+ENV TZ="Australia/Sydney"
+
+# Create the group 'supergroup'
+RUN groupadd supergroup
+
+# Add the 'root' user to the 'supergroup'
+RUN usermod -a -G supergroup root
     
 ENV TZ="Australia/Sydney"
 
+COPY run.sh /app/run.sh
+COPY src/main/resources/core-default.xml /app/core-default.xml
+COPY src/main/resources/core-site.xml /app/core-site.xml
+COPY src/main/resources/hdfs-site.xml /app/hdfs-site.xml
 COPY target/hadoop-poc-1.0.0-SNAPSHOT.jar /app/hadoop-poc-1.0.0-SNAPSHOT.jar
+
+RUN chmod +x /app/run.sh
 
 # Kube probes
 RUN touch /tmp/healthy
 RUN echo "JGroups hl7 application is running" > /tmp/healthy
 
-ENTRYPOINT ["java", "-jar", "/app/hadoop-poc-1.0.0-SNAPSHOT.jar"]
+ENTRYPOINT ["/app/run.sh"]
