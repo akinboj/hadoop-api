@@ -1,6 +1,3 @@
-https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopGET
-https://pegacorn-fhirplace-bigdata-api.site-a:32510/fhirplace-bigdata/hadoopPOST
-
 # Build base image if it does not exist:
 docker build --rm -t base-docker-wildfly:1.0.0 --file Dockerfile .
 
