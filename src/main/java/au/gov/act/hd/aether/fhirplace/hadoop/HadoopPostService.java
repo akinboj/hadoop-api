@@ -7,11 +7,8 @@ import org.apache.camel.support.jsse.KeyManagersParameters;
 import org.apache.camel.support.jsse.KeyStoreParameters;
 import org.apache.camel.support.jsse.SSLContextParameters;
 import org.apache.camel.support.jsse.TrustManagersParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class HadoopPostService extends RouteBuilder {
-    private static final Logger LOG = LoggerFactory.getLogger(HadoopPostService.class);
     private static final String SERVICE_NAME = System.getenv("KUBERNETES_SERVICE_NAME") + "." + System.getenv("KUBERNETES_NAMESPACE");
     private static final int SERVICE_PORT = 8443;
     private static final String HOST_ADDRESS = System.getenv("MY_POD_IP");
@@ -68,10 +65,9 @@ public class HadoopPostService extends RouteBuilder {
 
         // Define the processing route
         from("direct:processJSON")
-            .log("Received JSON: ${body}")
             .process(exchange -> {
-                String json = exchange.getIn().getBody(String.class);
-                LOG.info("Processing JSON: {}", json);
+                exchange.getIn().getBody(String.class);
+                
                 // You can add more processing logic here
             })
             .bean(FileWriteToHDFS.class, "writeFileToHDFS(${body})");
