@@ -1,6 +1,6 @@
 ---
 apiVersion: apps/v1 
-kind: StatefulSet
+kind: Deployment
 metadata:
   annotations:
     fabric8.io/metrics-path: dashboard/file/camel-routes.json/?var-project={{ .Values.serviceName }}&var-version={{ .Values.imageTag }}

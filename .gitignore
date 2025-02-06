@@ -26,3 +26,6 @@ hs_err_pid*
 /build/
 *.iml
 .idea
+
+# Keystore
+src/main/resources/*.jks
