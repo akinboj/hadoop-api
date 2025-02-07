@@ -97,10 +97,10 @@ spec:
         image: {{ .Values.dockerRepo }}pegacorn-fhirplace-bigdata-api:{{ .Values.imageTag }}            
         imagePullPolicy: {{ .Values.imagePullPolicy | default "IfNotPresent" }}
         livenessProbe:
-          exec:
-            command:
-            - cat
-            - /tmp/healthy
+          httpGet:
+            path: /health
+            port: 8443
+            scheme: HTTPS
           initialDelaySeconds: 15
           periodSeconds: 5
         name: hadoop-client
@@ -112,10 +112,10 @@ spec:
           name: services
           protocol: TCP
         readinessProbe:
-          exec:
-            command:
-            - cat
-            - /tmp/healthy
+          httpGet:
+            path: /health
+            port: 8443
+            scheme: HTTPS
           initialDelaySeconds: 15
           periodSeconds: 5
         securityContext:

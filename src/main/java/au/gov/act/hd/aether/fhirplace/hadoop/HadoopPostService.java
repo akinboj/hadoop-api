@@ -55,6 +55,13 @@ public class HadoopPostService extends RouteBuilder {
             .port(SERVICE_PORT) // Specify the port to listen on
             .bindingMode(RestBindingMode.auto)
             .scheme("https");
+        
+        // Add health check endpoint
+        rest("/health")
+            .get()
+            .produces("application/json")
+            .route()
+            .setBody(constant("{\"status\": \"UP\"}"));
 
         // Define the REST endpoint
         rest("/fhirplace-bigdata")

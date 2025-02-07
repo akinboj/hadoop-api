@@ -15,10 +15,6 @@ ENV TZ="Australia/Sydney"
 
 COPY target/hadoop-poc-1.0.0-SNAPSHOT.jar /app/hadoop-poc-1.0.0-SNAPSHOT.jar
 
-# Kube probes
-RUN touch /tmp/healthy
-RUN echo "Secure HDFS application is running" > /tmp/healthy
-
 WORKDIR /app
 
 CMD ["java", "-jar", "hadoop-poc-1.0.0-SNAPSHOT.jar"]
