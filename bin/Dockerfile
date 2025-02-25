@@ -15,11 +15,6 @@ ENV TZ="Australia/Sydney"
 
 COPY target/hadoop-poc-1.0.0-SNAPSHOT.jar /app/hadoop-poc-1.0.0-SNAPSHOT.jar
 
-# Copy the startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
 WORKDIR /app
 
-# Use the script to start the application
-CMD ["/app/start.sh"]
+CMD ["java", "-jar", "hadoop-poc-1.0.0-SNAPSHOT.jar"]
