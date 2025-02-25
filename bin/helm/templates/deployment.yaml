@@ -9,6 +9,7 @@ metadata:
     version: "{{ .Values.imageTag }}"
   name: {{ .Values.serviceName }}
 spec:
+  serviceName: {{ .Values.serviceName }}
   replicas: {{ .Values.numOfPods | default 2 }}
   revisionHistoryLimit: 2
   selector:
